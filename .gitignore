@@ -1,0 +1,18 @@
+﻿# Build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Rider / JetBrains
+.idea/
+
+# NuGet
+*.nupkg
+packages/
+
+# Secrets
+*.pfx
+*.key
+appsettings.Local.json

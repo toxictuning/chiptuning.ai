@@ -1,0 +1,134 @@
+<Window x:Class="ChiptuningAi.Dashboard.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Chiptuning.Ai — Login"
+        Height="540" Width="420"
+        MinHeight="500" MinWidth="360"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="{DynamicResource BgDark}"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        StateChanged="Window_StateChanged">
+
+    <Grid Background="{DynamicResource BgDark}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title bar -->
+        <Grid Grid.Row="0" Background="{DynamicResource BgMid}"
+              MouseLeftButtonDown="TitleBar_MouseDown">
+            <TextBlock Text="CHIPTUNING.AI" VerticalAlignment="Center" Margin="14,0,0,0"
+                       Foreground="{DynamicResource TextSecondary}" FontSize="11" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+                <Button Content="—" Click="Minimize_Click"
+                        Foreground="{DynamicResource TextSecondary}"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="14" Cursor="Hand" Width="36"/>
+                <Button x:Name="MaximizeBtn" Content="☐" Click="Maximize_Click"
+                        Foreground="{DynamicResource TextSecondary}"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="12" Cursor="Hand" Width="36"/>
+                <Button Content="✕" Click="Close_Click"
+                        Foreground="{DynamicResource TextSecondary}"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="13" Cursor="Hand" Width="36"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Content: card floats centered in remaining space -->
+        <Grid Grid.Row="1">
+            <Border x:Name="LoginCard"
+                    Width="320"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Background="{DynamicResource BgPanel}"
+                    Padding="40,36"
+                    Opacity="0">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="6"
+                                      Opacity="0.55" Direction="270"/>
+                </Border.Effect>
+                <Border.RenderTransform>
+                    <TranslateTransform/>
+                </Border.RenderTransform>
+                <Border.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                 From="0" To="1" Duration="0:0:0.4">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                 From="16" To="0" Duration="0:0:0.4">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Border.Triggers>
+
+                <StackPanel>
+                    <TextBlock Text="CHIPTUNING.AI" FontSize="20" FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimary}"
+                               HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="SDK Dashboard" FontSize="11"
+                               Foreground="{DynamicResource TextSecondary}"
+                               HorizontalAlignment="Center" Margin="0,0,0,36"/>
+
+                    <Label Content="API URL"/>
+                    <TextBox x:Name="ApiUrlBox" Style="{StaticResource DarkTextBox}"
+                             Text="https://chiptuning-api.azurewebsites.net"
+                             Margin="0,0,0,20"/>
+
+                    <Label Content="EMAIL"/>
+                    <TextBox x:Name="EmailBox" Style="{StaticResource DarkTextBox}"
+                             Margin="0,0,0,20"/>
+
+                    <Label Content="PASSWORD"/>
+                    <PasswordBox x:Name="PasswordBox" Style="{StaticResource DarkPasswordBox}"
+                                 Margin="0,0,0,32" KeyDown="PasswordBox_KeyDown"/>
+
+                    <TextBlock x:Name="ErrorText" Foreground="#BB4444"
+                               FontSize="12" Margin="0,0,0,16"
+                               TextWrapping="Wrap" Visibility="Collapsed"/>
+
+                    <!-- Sign-in button with embedded spinner -->
+                    <Button x:Name="LoginBtn" Style="{StaticResource AccentButton}"
+                            HorizontalAlignment="Stretch" Height="42"
+                            Click="Login_Click">
+                        <Grid>
+                            <TextBlock x:Name="LoginBtnText" Text="SIGN IN"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource AccentButtonFg}"/>
+                            <!-- Circular spinner (hidden until login is in progress) -->
+                            <Canvas x:Name="LoginSpinner" Width="22" Height="22"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Visibility="Collapsed">
+                                <Ellipse Width="20" Height="20" Canvas.Left="1" Canvas.Top="1"
+                                         StrokeThickness="2" Opacity="0.25"
+                                         Stroke="{DynamicResource AccentButtonFg}"/>
+                                <Ellipse x:Name="SpinnerArc" Width="20" Height="20"
+                                         Canvas.Left="1" Canvas.Top="1"
+                                         StrokeThickness="2" StrokeDashArray="6 22"
+                                         Stroke="{DynamicResource AccentButtonFg}"
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform x:Name="SpinnerRotate"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Canvas>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,440 @@
+<Window x:Class="ChiptuningAi.Dashboard.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Chiptuning.Ai — Dashboard"
+        Height="700" Width="1100"
+        MinHeight="560" MinWidth="860"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgDark}"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        StateChanged="Window_StateChanged">
+
+    <Border x:Name="OuterBorder" Background="{DynamicResource BgDark}" BorderThickness="0">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ── Title bar ── -->
+            <Border x:Name="TitleBarBorder" Grid.Row="0" Background="{DynamicResource BgMid}"
+                    MouseLeftButtonDown="TitleBar_MouseDown">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="⚡" FontSize="16" Foreground="{DynamicResource AccentButtonBg}" Margin="0,0,8,0"/>
+                        <TextBlock Text="Chiptuning.Ai" FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="  SDK Dashboard" FontSize="13"
+                                   Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                VerticalAlignment="Center" Margin="0,0,12,0">
+                        <TextBlock x:Name="ProfileLabel" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                        <!-- Theme toggle + swatch picker -->
+                        <Border Background="{DynamicResource GhostButtonBg}" Padding="8,4"
+                                VerticalAlignment="Center" Margin="0,0,10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="ThemeToggleBtn" Content="☾"
+                                        Foreground="{DynamicResource TextSecondary}"
+                                        Background="Transparent" BorderThickness="0"
+                                        FontSize="14" Cursor="Hand" Width="22" Padding="0"
+                                        ToolTip="Toggle dark / light"
+                                        Click="ThemeToggle_Click"/>
+                                <Rectangle Width="1" Fill="{DynamicResource Border}"
+                                           Margin="6,2" VerticalAlignment="Stretch"/>
+                                <!-- Swatches: 14×14 circles -->
+                                <Border x:Name="SwatchMono"   Width="14" Height="14" Background="#888888"
+                                        CornerRadius="7" BorderThickness="2" BorderBrush="Transparent"
+                                        Cursor="Hand" Tag="Mono"   Margin="3,0" VerticalAlignment="Center"
+                                        ToolTip="Monochrome" MouseLeftButtonDown="Swatch_Click"/>
+                                <Border x:Name="SwatchBlue"   Width="14" Height="14" Background="#3B82F6"
+                                        CornerRadius="7" BorderThickness="2" BorderBrush="Transparent"
+                                        Cursor="Hand" Tag="Blue"   Margin="3,0" VerticalAlignment="Center"
+                                        ToolTip="Blue" MouseLeftButtonDown="Swatch_Click"/>
+                                <Border x:Name="SwatchGreen"  Width="14" Height="14" Background="#22C55E"
+                                        CornerRadius="7" BorderThickness="2" BorderBrush="Transparent"
+                                        Cursor="Hand" Tag="Green"  Margin="3,0" VerticalAlignment="Center"
+                                        ToolTip="Green" MouseLeftButtonDown="Swatch_Click"/>
+                                <Border x:Name="SwatchRed"    Width="14" Height="14" Background="#EF4444"
+                                        CornerRadius="7" BorderThickness="2" BorderBrush="Transparent"
+                                        Cursor="Hand" Tag="Red"    Margin="3,0" VerticalAlignment="Center"
+                                        ToolTip="Red" MouseLeftButtonDown="Swatch_Click"/>
+                                <Border x:Name="SwatchPurple" Width="14" Height="14" Background="#8B5CF6"
+                                        CornerRadius="7" BorderThickness="2" BorderBrush="Transparent"
+                                        Cursor="Hand" Tag="Purple" Margin="3,0" VerticalAlignment="Center"
+                                        ToolTip="Purple" MouseLeftButtonDown="Swatch_Click"/>
+                                <Border x:Name="SwatchAmber"  Width="14" Height="14" Background="#F59E0B"
+                                        CornerRadius="7" BorderThickness="2" BorderBrush="Transparent"
+                                        Cursor="Hand" Tag="Amber"  Margin="3,0" VerticalAlignment="Center"
+                                        ToolTip="Amber" MouseLeftButtonDown="Swatch_Click"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Content="—" Click="Minimize_Click" Foreground="{DynamicResource TextSecondary}"
+                                Background="Transparent" BorderThickness="0" FontSize="16" Cursor="Hand" Width="28"/>
+                        <Button x:Name="MaximizeBtn" Content="☐" Click="Maximize_Click"
+                                Foreground="{DynamicResource TextSecondary}"
+                                Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Width="28"/>
+                        <Button Content="✕" Click="Close_Click" Foreground="{DynamicResource TextSecondary}"
+                                Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Width="28"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ── Body ── -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Sidebar -->
+                <Border Grid.Column="0" Background="{DynamicResource BgMid}">
+                    <DockPanel Margin="12,20,12,12">
+                        <Button DockPanel.Dock="Bottom" Content="🚪  Logout"
+                                Style="{StaticResource AccentButton}"
+                                HorizontalAlignment="Stretch" Click="Logout_Click"/>
+                        <StackPanel>
+                            <Button x:Name="NavDropZone" Content="🎯  Drop Zone"
+                                    Style="{StaticResource GhostButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="DropZone"/>
+                            <Button x:Name="NavFiles"   Content="📁  Files"
+                                    Style="{StaticResource GhostButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Files"/>
+                            <Button x:Name="NavUpload"  Content="⬆  Upload"
+                                    Style="{StaticResource GhostButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Upload"/>
+                            <Button x:Name="NavPatches" Content="🩹  Patches"
+                                    Style="{StaticResource GhostButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Patches"/>
+                            <Button x:Name="NavProfile" Content="👤  Profile"
+                                    Style="{StaticResource GhostButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Profile"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- Content area -->
+                <Border Grid.Column="1" Padding="24">
+                  <Grid>
+
+                    <!-- ── Drop Zone panel ── -->
+                    <Grid x:Name="PanelDropZone"
+                          AllowDrop="True"
+                          DragOver="DropZone_DragOver"
+                          DragEnter="DropZone_DragEnter"
+                          DragLeave="DropZone_DragLeave"
+                          Drop="DropZone_Drop">
+                        <!-- Dashed border -->
+                        <Rectangle x:Name="DropRect"
+                                   Stroke="{DynamicResource DropZoneBorder}"
+                                   StrokeThickness="1" StrokeDashArray="5 5"
+                                   Margin="0" IsHitTestVisible="False"/>
+
+                        <!-- Idle: drop prompt -->
+                        <StackPanel x:Name="DropInitial"
+                                    VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="⬇" FontSize="40"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       HorizontalAlignment="Center" Margin="0,0,0,14"/>
+                            <TextBlock Text="DROP ECU FILE HERE" FontSize="16" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBlock Text="Match search runs automatically — no inputs needed"
+                                       FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                                       HorizontalAlignment="Center" Margin="0,0,0,24"
+                                       TextAlignment="Center"/>
+                            <Button Content="BROWSE FILE" Style="{StaticResource GhostButton}"
+                                    HorizontalAlignment="Center" Click="BrowseDropZone_Click"/>
+                        </StackPanel>
+
+                        <!-- Auto-searching overlay (shown immediately on file select) -->
+                        <Grid x:Name="DropSearching" Visibility="Collapsed">
+                            <Rectangle Fill="{DynamicResource BgDark}" Opacity="0.85"/>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock x:Name="DropSearchFileName" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           HorizontalAlignment="Center" Margin="0,0,0,12"
+                                           TextTrimming="CharacterEllipsis" MaxWidth="400"/>
+                                <TextBlock x:Name="DropSearchStatus" FontSize="14"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <!-- ── Files panel ── -->
+                    <Grid x:Name="PanelFiles" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Files" FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
+
+                        <DataGrid x:Name="FilesGrid" Grid.Row="1"
+                                  MouseDoubleClick="FilesGrid_DoubleClick">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="200"/>
+                                <DataGridTextColumn Header="Vehicle"   Binding="{Binding Vehicle}"  Width="180"/>
+                                <DataGridTextColumn Header="ECU"       Binding="{Binding Ecu}"      Width="160"/>
+                                <DataGridTextColumn Header="Read"      Binding="{Binding Read}"     Width="140"/>
+                                <DataGridTextColumn Header="Size (KB)" Binding="{Binding SizeKb}"   Width="80"/>
+                                <DataGridTextColumn Header="Patches"   Binding="{Binding PatchCount}" Width="70"/>
+                                <DataGridTextColumn Header="Uploaded"  Binding="{Binding Uploaded}" Width="130"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock x:Name="FilesStatus" Grid.Row="2"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="12" Margin="0,8,0,0"/>
+                    </Grid>
+
+                    <!-- ── Upload panel ── -->
+                    <ScrollViewer x:Name="PanelUpload" Visibility="Collapsed"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="Upload File" FontSize="20" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
+
+                            <Label Content="ECU File"/>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="UploadFilePath" Grid.Column="0"
+                                         Style="{StaticResource DarkTextBox}"
+                                         Margin="0,0,8,0" IsReadOnly="True"/>
+                                <Button Grid.Column="1" Content="Browse…"
+                                        Style="{StaticResource GhostButton}"
+                                        Click="Browse_Click"/>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/><RowDefinition/><RowDefinition/>
+                                    <RowDefinition/><RowDefinition/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,12,12">
+                                    <Label Content="Vehicle Class *"/>
+                                    <ComboBox x:Name="MdVehicleClass" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,0,12">
+                                    <Label Content="Vehicle Make *"/>
+                                    <ComboBox x:Name="MdVehicleMake" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,12,12">
+                                    <Label Content="Model *"/>
+                                    <ComboBox x:Name="MdVehicleModel" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,0,12">
+                                    <Label Content="Variant *"/>
+                                    <TextBox x:Name="MdVehicleVariant" Style="{StaticResource DarkTextBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,12,12">
+                                    <Label Content="Engine Type *"/>
+                                    <ComboBox x:Name="MdEngineType" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Grid.Row="2" Margin="0,0,0,12">
+                                    <Label Content="ECU Type *"/>
+                                    <ComboBox x:Name="MdECUType" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="0" Grid.Row="3" Margin="0,0,12,12">
+                                    <Label Content="ECU Make *"/>
+                                    <ComboBox x:Name="MdECUMake" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Grid.Row="3" Margin="0,0,0,12">
+                                    <Label Content="ECU Model *"/>
+                                    <ComboBox x:Name="MdECUModel" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="0" Grid.Row="4" Margin="0,0,12,12">
+                                    <Label Content="Read Hardware *"/>
+                                    <ComboBox x:Name="MdReadHardware" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Grid.Row="4" Margin="0,0,0,12">
+                                    <Label Content="Read Mode *"/>
+                                    <ComboBox x:Name="MdReadMode" Style="{StaticResource DarkComboBox}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Optional" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <Label Content="HW Number"/>
+                                    <TextBox x:Name="MdHWNumber" Style="{StaticResource DarkTextBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                    <Label Content="SW Number"/>
+                                    <TextBox x:Name="MdSWNumber" Style="{StaticResource DarkTextBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                                    <Label Content="Power (kW)"/>
+                                    <TextBox x:Name="MdPower" Style="{StaticResource DarkTextBox}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="3">
+                                    <Label Content="Torque (Nm)"/>
+                                    <TextBox x:Name="MdTorque" Style="{StaticResource DarkTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <ProgressBar x:Name="UploadProgress" Height="6" Margin="0,20,0,8"
+                                         Minimum="0" Maximum="100" Visibility="Collapsed"/>
+                            <TextBlock x:Name="UploadStatus" Foreground="{DynamicResource TextSecondary}"
+                                       FontSize="12" Margin="0,0,0,12"/>
+                            <Button Content="Upload File" Style="{StaticResource AccentButton}"
+                                    HorizontalAlignment="Left" Height="40" Width="140"
+                                    Click="UploadFile_Click"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ── Patches panel ── -->
+                    <Grid x:Name="PanelPatches" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Patches" FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
+                        <DataGrid x:Name="PatchesGrid" Grid.Row="1">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Patch ID"    Binding="{Binding ShortId}"     Width="120"/>
+                                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Version"     Binding="{Binding Version}"     Width="80"/>
+                                <DataGridTextColumn Header="Size (KB)"   Binding="{Binding SizeKb}"      Width="80"/>
+                                <DataGridTextColumn Header="Created"     Binding="{Binding Created}"     Width="130"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="PatchesStatus" Grid.Row="2"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="12" Margin="0,8,0,0"/>
+                    </Grid>
+
+                    <!-- ── Profile panel ── -->
+                    <StackPanel x:Name="PanelProfile" Visibility="Collapsed">
+                        <TextBlock Text="Profile" FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,24"/>
+                        <Border Background="{DynamicResource BgPanel}" Padding="24">
+                            <StackPanel>
+                                <TextBlock x:Name="ProfEmail"   FontSize="15"
+                                           Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,12"/>
+                                <TextBlock x:Name="ProfTier"    FontSize="13"
+                                           Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+                                <TextBlock x:Name="ProfStorage" FontSize="13"
+                                           Foreground="{DynamicResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                  </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ── Match dialog overlay ── -->
+            <Grid x:Name="PanelMatchDialog" Grid.RowSpan="2" Visibility="Collapsed"
+                  Panel.ZIndex="50" Background="#CC000000">
+                <Border Background="{DynamicResource BgPanel}" Padding="32"
+                        Width="540" MaxHeight="460"
+                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Border.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="8"
+                                          Opacity="0.65" Direction="270"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <TextBlock Text="FILE MATCH FOUND" FontSize="11" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
+                        <TextBlock x:Name="MatchFileName" FontSize="16" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
+                        <TextBlock Text="This file already exists in the database. Select a match to open."
+                                   FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                                   Margin="0,0,0,16"/>
+                        <DataGrid x:Name="MatchList" MaxHeight="200" IsReadOnly="True"
+                                  SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="*"/>
+                                <DataGridTextColumn Header="Match %"   Binding="{Binding SimilarityPct}" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                    Margin="0,20,0,0">
+                            <Button Content="CANCEL" Style="{StaticResource GhostButton}"
+                                    Margin="0,0,8,0" Click="MatchClose_Click"/>
+                            <Button Content="OPEN FILE" Style="{StaticResource AccentButton}"
+                                    Click="MatchOpen_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ── Toast overlay ── -->
+            <ItemsControl x:Name="ToastList" Grid.RowSpan="2"
+                          VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                          Margin="0,0,20,20" IsHitTestVisible="False"
+                          Panel.ZIndex="999">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="ToastBorder"
+                                Background="{DynamicResource BgPanel}"
+                                Padding="14,10" Margin="0,6,0,0"
+                                MinWidth="200" MaxWidth="360" Opacity="0">
+                            <Border.Effect>
+                                <DropShadowEffect Color="Black" BlurRadius="14" ShadowDepth="4"
+                                                  Opacity="0.5" Direction="270"/>
+                            </Border.Effect>
+                            <Border.RenderTransform><TranslateTransform/></Border.RenderTransform>
+                            <Border.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0" To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                             From="40" To="0" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="1" To="0" BeginTime="0:0:3" Duration="0:0:0.4"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Border.Triggers>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Icon}" FontSize="13" Margin="0,0,10,0"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Message}" Foreground="{DynamicResource TextPrimary}"
+                                           FontSize="12" TextWrapping="Wrap" MaxWidth="280"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </Grid>
+    </Border>
+</Window>

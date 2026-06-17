@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ── Colours ────────────────────────────────────────────────────────── -->
+    <Color x:Key="InputBorderColor">#D0D0D0</Color>
+    <Color x:Key="InputFocusColor">#0C0C0C</Color>
+
+    <!-- ── Brushes ────────────────────────────────────────────────────────── -->
+    <SolidColorBrush x:Key="BgDark"           Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="BgMid"            Color="#E4E4E4"/>
+    <SolidColorBrush x:Key="BgPanel"          Color="#FAFAFA"/>
+    <SolidColorBrush x:Key="TextPrimary"      Color="#0C0C0C"/>
+    <SolidColorBrush x:Key="TextSecondary"    Color="#666666"/>
+    <SolidColorBrush x:Key="Border"           Color="#D0D0D0"/>
+
+    <!-- Accent (default mono — overridden at runtime by swatch) -->
+    <SolidColorBrush x:Key="AccentButtonBg"   Color="#0C0C0C"/>
+    <SolidColorBrush x:Key="AccentButtonFg"   Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="InputFocusBrush"  Color="#0C0C0C"/>
+
+    <!-- Ghost button -->
+    <SolidColorBrush x:Key="GhostButtonBg"       Color="#E4E4E4"/>
+    <SolidColorBrush x:Key="GhostButtonBgHover"  Color="#D4D4D4"/>
+
+    <!-- Input -->
+    <SolidColorBrush x:Key="InputBg"          Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="PlaceholderFg"    Color="#BBBBBB"/>
+
+    <!-- Data grid -->
+    <SolidColorBrush x:Key="DataGridRow"      Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="DataGridAltRow"   Color="#EEEEEE"/>
+    <SolidColorBrush x:Key="DataGridHeader"   Color="#E8E8E8"/>
+    <SolidColorBrush x:Key="DataGridSel"      Color="#D8D8D8"/>
+    <SolidColorBrush x:Key="DataGridSelFg"    Color="#0C0C0C"/>
+
+    <!-- Drop zone -->
+    <SolidColorBrush x:Key="DropZoneBorder"      Color="#D0D0D0"/>
+    <SolidColorBrush x:Key="DropZoneBorderHover" Color="#909090"/>
+
+</ResourceDictionary>
