@@ -141,7 +141,7 @@
                         </Button>
                         <Button DockPanel.Dock="Bottom"
                                 Style="{StaticResource GhostButton}"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                 Margin="0,0,0,4" Click="ViewLogs_Click" ToolTip="Open application log file">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="13"
@@ -334,23 +334,25 @@
                                   SelectionUnit="FullRow"
                                   HorizontalScrollBarVisibility="Disabled"
                                   HorizontalAlignment="Stretch"
+                                  ColumnWidth="*"
                                   ToolTip="Double-click a row to open file details">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="2*"/>
-                                <DataGridTextColumn Header="Vehicle"   Binding="{Binding Vehicle}"  Width="2*"/>
-                                <DataGridTextColumn Header="ECU"       Binding="{Binding Ecu}"      Width="1.5*"/>
-                                <DataGridTextColumn Header="Read"      Binding="{Binding Read}"     Width="1.5*"/>
-                                <DataGridTextColumn Header="Size (KB)" Binding="{Binding SizeKb}"   Width="80"/>
-                                <DataGridTextColumn Header="Patches"   Binding="{Binding PatchCount}" Width="65"/>
-                                <DataGridTextColumn Header="Uploaded"  Binding="{Binding Uploaded}" Width="120"/>
-                                <DataGridTemplateColumn Header="" Width="36">
+                                <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="2*" MinWidth="140"/>
+                                <DataGridTextColumn Header="Vehicle"   Binding="{Binding Vehicle}"  Width="2*" MinWidth="120"/>
+                                <DataGridTextColumn Header="ECU"       Binding="{Binding Ecu}"      Width="*"  MinWidth="100"/>
+                                <DataGridTextColumn Header="Read"      Binding="{Binding Read}"     Width="*"  MinWidth="90"/>
+                                <DataGridTextColumn Header="Size (KB)" Binding="{Binding SizeKb}"   Width="75" MinWidth="60"/>
+                                <DataGridTextColumn Header="Patches"   Binding="{Binding PatchCount}" Width="62" MinWidth="55"/>
+                                <DataGridTextColumn Header="Uploaded"  Binding="{Binding Uploaded}" Width="110" MinWidth="90"/>
+                                <DataGridTemplateColumn Header="" Width="46" MinWidth="46">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Tag="{Binding FileId}"
                                                     Click="DeleteFile_Click"
                                                     Background="Transparent" BorderThickness="0"
                                                     Cursor="Hand" ToolTip="Delete file"
-                                                    Padding="4,2">
+                                                    HorizontalAlignment="Center"
+                                                    Padding="6,2">
                                                 <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
                                                            FontSize="12" Foreground="#CC4444"/>
                                             </Button>
