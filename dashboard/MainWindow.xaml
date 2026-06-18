@@ -139,6 +139,16 @@
                                 <TextBlock Text="{DynamicResource Nav.Logout}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button DockPanel.Dock="Bottom"
+                                Style="{StaticResource GhostButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                Margin="0,0,0,4" Click="ViewLogs_Click" ToolTip="Open application log file">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Width="20" VerticalAlignment="Center"/>
+                                <TextBlock Text="View Logs" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <StackPanel>
                             <Button x:Name="NavDropZone"
                                     Style="{StaticResource GhostButton}"
@@ -333,6 +343,20 @@
                                 <DataGridTextColumn Header="Size (KB)" Binding="{Binding SizeKb}"   Width="80"/>
                                 <DataGridTextColumn Header="Patches"   Binding="{Binding PatchCount}" Width="65"/>
                                 <DataGridTextColumn Header="Uploaded"  Binding="{Binding Uploaded}" Width="120"/>
+                                <DataGridTemplateColumn Header="" Width="36">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Tag="{Binding FileId}"
+                                                    Click="DeleteFile_Click"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Cursor="Hand" ToolTip="Delete file"
+                                                    Padding="4,2">
+                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="12" Foreground="#CC4444"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
 

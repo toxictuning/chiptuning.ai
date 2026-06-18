@@ -89,7 +89,9 @@ public partial class MainWindow : Window
             catch (Exception ex)
             {
                 AppLogger.Error("Token refresh failed", ex);
-                ShowToast("Session expired — please sign in again.", "⚠");
+                SessionStore.Clear();
+                new LoginWindow().Show();
+                Close();
             }
         };
         _refreshTimer.Start();
@@ -568,6 +570,55 @@ public partial class MainWindow : Window
     {
         if (FilesGrid.SelectedItem is not FileRow row) return;
         OpenFileDetail(row.FileId, row.FileName);
+    }
+
+    private async void DeleteFile_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button btn || btn.Tag is not Guid fileId) return;
+
+        var row  = (FilesGrid.ItemsSource as IEnumerable<FileRow>)?.FirstOrDefault(r => r.FileId == fileId);
+        var name = row?.FileName ?? fileId.ToString();
+
+        var confirm = MessageBox.Show(
+            $"Delete '{name}'?\n\nAll associated patches will also be removed.",
+            "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            await _client.Files.DeleteAsync(fileId);
+            _filesLoaded = false;
+            await LoadFilesAsync();
+            ShowToast($"'{name}' deleted.", "✓");
+            AppLogger.Info($"Deleted file {fileId} ({name})");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Delete file {fileId} failed", ex);
+            ShowToast($"Delete failed: {ex.Message}", "✕");
+        }
+    }
+
+    private void ViewLogs_Click(object sender, RoutedEventArgs e)
+    {
+        var path = AppLogger.LogPath;
+        try
+        {
+            if (!File.Exists(path))
+            {
+                ShowToast("No log file found yet.", "ℹ");
+                return;
+            }
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path)
+            {
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Failed to open log file", ex);
+            ShowToast($"Could not open log: {path}", "✕");
+        }
     }
 
     // ── Upload ────────────────────────────────────────────────────────────────

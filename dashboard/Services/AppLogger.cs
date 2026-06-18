@@ -10,6 +10,8 @@ public static class AppLogger
 
     private static readonly object _lock = new();
 
+    public static string LogPath => _logPath;
+
     public static void Info(string message)  => Write("INFO ", message);
     public static void Warn(string message)  => Write("WARN ", message);
     public static void Error(string message, Exception? ex = null)

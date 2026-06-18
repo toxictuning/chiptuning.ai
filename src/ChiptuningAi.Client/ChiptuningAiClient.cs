@@ -56,7 +56,7 @@ public sealed class ChiptuningAiClient : IDisposable
     public string? RefreshToken { get; private set; }
 
     /// <summary>UTC time when the current access token expires, or null if unknown.</summary>
-    public DateTimeOffset? TokenExpiresAt { get; private set; }
+    public DateTimeOffset? TokenExpiresAt { get; internal set; }
 
     // ── Sub-clients ───────────────────────────────────────────────────────────
 
@@ -105,6 +105,20 @@ public sealed class ChiptuningAiClient : IDisposable
     {
         var client = new ChiptuningAiClient(baseUrl);
         client.SetTokens(accessToken, refreshToken);
+        return client;
+    }
+
+    /// <summary>
+    /// Creates a client pre-loaded with an existing access token and a known expiry time.
+    /// Use this when restoring a persisted session so the refresh timer schedules correctly.
+    /// </summary>
+    public static ChiptuningAiClient FromToken(
+        string accessToken, string refreshToken,
+        string baseUrl, DateTimeOffset? expiresAt)
+    {
+        var client = new ChiptuningAiClient(baseUrl);
+        client.SetTokens(accessToken, refreshToken);
+        client.TokenExpiresAt = expiresAt;
         return client;
     }
 

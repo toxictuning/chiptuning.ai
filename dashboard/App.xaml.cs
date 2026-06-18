@@ -19,7 +19,7 @@ public partial class App : Application
         {
             try
             {
-                var client = ChiptuningAiClient.FromToken(s.AccessToken, s.RefreshToken, s.ApiUrl);
+                var client = ChiptuningAiClient.FromToken(s.AccessToken, s.RefreshToken, s.ApiUrl, s.ExpiresAt);
                 AppLogger.Info("Restored session from store");
                 new MainWindow(client, s.ApiUrl, s.Email).Show();
                 return;
