@@ -86,7 +86,7 @@ public partial class LoginWindow : Window
                 client.RefreshToken ?? string.Empty,
                 client.TokenExpiresAt);
 
-            var dashboard = new MainWindow(client);
+            var dashboard = new MainWindow(client, ApiUrlBox.Text.Trim(), EmailBox.Text.Trim());
             dashboard.Show();
             Close();
         }

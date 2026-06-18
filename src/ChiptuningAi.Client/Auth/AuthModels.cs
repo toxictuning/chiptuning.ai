@@ -48,4 +48,7 @@ public sealed class UserProfile
 
     /// <summary>Total storage consumed in bytes.</summary>
     public long StorageUsedBytes { get; init; }
+
+    /// <summary>Storage allowance for the current tier in bytes.</summary>
+    public long StorageLimitBytes { get; init; }
 }

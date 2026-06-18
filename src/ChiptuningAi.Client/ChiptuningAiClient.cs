@@ -148,6 +148,71 @@ public sealed class ChiptuningAiClient : IDisposable
         await SendAsync<object>(request, authenticate: true, ct);
     }
 
+    internal async Task PatchAsync<TBody>(string path, TBody body, CancellationToken ct)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, path)
+        {
+            Content = new StringContent(
+                JsonSerializer.Serialize(body, JsonOptions), Encoding.UTF8, "application/json")
+        };
+        await SendAsync<object>(request, authenticate: true, ct);
+    }
+
+    /// <summary>
+    /// GETs a resource and returns the raw response bytes (for binary file downloads).
+    /// Throws <see cref="ApiException"/> if the server returns a non-success status.
+    /// </summary>
+    internal async Task<byte[]> GetBinaryAsync(string path, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(_accessToken))
+            throw new InvalidOperationException("Not authenticated. Call client.Auth.LoginAsync() first.");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+
+        var response = await _http.SendAsync(request, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            var error = TryDeserialize<ApiResponse<object>>(json);
+            var message = error?.Error?.Message ?? error?.Message
+                ?? (string.IsNullOrWhiteSpace(json) ? response.ReasonPhrase : json)
+                ?? "Unknown error";
+            throw new ApiException(message, error?.Error?.Code, (int)response.StatusCode);
+        }
+
+        return await response.Content.ReadAsByteArrayAsync();
+    }
+
+    /// <summary>
+    /// POSTs multipart form data and returns the raw response bytes (for binary file downloads).
+    /// Throws <see cref="ApiException"/> if the server returns a non-success status.
+    /// </summary>
+    internal async Task<byte[]> PostFormBinaryAsync(
+        string path, MultipartFormDataContent form, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(_accessToken))
+            throw new InvalidOperationException("Not authenticated. Call client.Auth.LoginAsync() first.");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = form };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+
+        var response = await _http.SendAsync(request, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            var error = TryDeserialize<ApiResponse<object>>(json);
+            var message = error?.Error?.Message ?? error?.Message
+                ?? (string.IsNullOrWhiteSpace(json) ? response.ReasonPhrase : json)
+                ?? "Unknown error";
+            throw new ApiException(message, error?.Error?.Code, (int)response.StatusCode);
+        }
+
+        return await response.Content.ReadAsByteArrayAsync();
+    }
+
     private async Task<TResponse> SendAsync<TResponse>(
         HttpRequestMessage request, bool authenticate, CancellationToken ct) where TResponse : class
     {

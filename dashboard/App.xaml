@@ -6,12 +6,18 @@
             <ResourceDictionary.MergedDictionaries>
                 <!-- [0] Active theme — swapped at runtime by ThemeManager -->
                 <ResourceDictionary Source="Themes/Dark.xaml"/>
+                <!-- [1] Active language — swapped at runtime by LanguageManager -->
+                <ResourceDictionary Source="Languages/en.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- ── Fonts ──────────────────────────────────────────────────────────── -->
+            <FontFamily x:Key="JuraFont">pack://application:,,,/Fonts/Jura-VariableFont_wght.ttf#Jura</FontFamily>
 
             <!-- ── AccentButton: themed fill, light overlay on hover ──────────── -->
             <Style x:Key="AccentButton" TargetType="Button">
                 <Setter Property="Background"      Value="{DynamicResource AccentButtonBg}"/>
                 <Setter Property="Foreground"      Value="{DynamicResource AccentButtonFg}"/>
+                <Setter Property="FontFamily"      Value="Segoe UI Emoji, Segoe UI"/>
                 <Setter Property="FontWeight"      Value="SemiBold"/>
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="Padding"         Value="18,8"/>
@@ -26,7 +32,8 @@
                                         IsHitTestVisible="False"/>
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                                                   Margin="{TemplateBinding Padding}"
-                                                  TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                                                  TextBlock.Foreground="{TemplateBinding Foreground}"
+                                                  TextBlock.FontFamily="{TemplateBinding FontFamily}"/>
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <EventTrigger RoutedEvent="MouseEnter">
@@ -60,6 +67,7 @@
             <Style x:Key="GhostButton" TargetType="Button">
                 <Setter Property="Background"      Value="{DynamicResource GhostButtonBg}"/>
                 <Setter Property="Foreground"      Value="{DynamicResource TextPrimary}"/>
+                <Setter Property="FontFamily"      Value="Segoe UI Emoji, Segoe UI"/>
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="Padding"         Value="16,8"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -71,7 +79,8 @@
                                     Padding="{TemplateBinding Padding}">
                                 <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                   VerticalAlignment="Center"
-                                                  TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                                                  TextBlock.Foreground="{TemplateBinding Foreground}"
+                                                  TextBlock.FontFamily="{TemplateBinding FontFamily}"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
@@ -93,6 +102,7 @@
                 <Setter Property="Foreground"       Value="{DynamicResource TextPrimary}"/>
                 <Setter Property="CaretBrush"       Value="{DynamicResource TextPrimary}"/>
                 <Setter Property="Padding"          Value="10,8"/>
+                <Setter Property="MinHeight"        Value="36"/>
                 <Setter Property="FontSize"         Value="13"/>
                 <Setter Property="BorderThickness"  Value="0"/>
                 <Setter Property="SelectionBrush"   Value="{DynamicResource InputFocusBrush}"/>
@@ -213,6 +223,7 @@
                 <Setter Property="FontSize"          Value="13"/>
                 <Setter Property="BorderThickness"   Value="0"/>
                 <Setter Property="Padding"           Value="10,8"/>
+                <Setter Property="Height"            Value="36"/>
                 <Setter Property="IsEditable"        Value="True"/>
                 <Setter Property="StaysOpenOnEdit"   Value="True"/>
                 <Setter Property="MaxDropDownHeight" Value="200"/>
@@ -356,11 +367,37 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ProgressBar">
-                            <Grid>
+                            <Grid ClipToBounds="True">
                                 <Rectangle Fill="{TemplateBinding Background}"/>
+                                <!-- Determinate fill -->
                                 <Rectangle x:Name="PART_Indicator" HorizontalAlignment="Left"
                                            Fill="{TemplateBinding Foreground}"/>
+                                <!-- Indeterminate: moving glow bar (hidden by default) -->
+                                <Rectangle x:Name="IndeterminateGlow" Width="200"
+                                           HorizontalAlignment="Left" Visibility="Collapsed"
+                                           Fill="{TemplateBinding Foreground}">
+                                    <Rectangle.RenderTransform>
+                                        <TranslateTransform x:Name="GlowTranslate" X="-200"/>
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
                             </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsIndeterminate" Value="True">
+                                    <Setter TargetName="PART_Indicator"    Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="IndeterminateGlow" Property="Visibility" Value="Visible"/>
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="GlowTranslate"
+                                                    Storyboard.TargetProperty="X"
+                                                    From="-200" To="1400"
+                                                    Duration="0:0:1.2"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

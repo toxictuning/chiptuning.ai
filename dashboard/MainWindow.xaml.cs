@@ -14,10 +14,23 @@ using ChiptuningAi.Dashboard.Services;
 
 namespace ChiptuningAi.Dashboard;
 
+file sealed record FileRow(
+    Guid   FileId,
+    string FileName,
+    string Vehicle,
+    string Ecu,
+    string Read,
+    long   SizeKb,
+    int    PatchCount,
+    string Uploaded);
+
 public partial class MainWindow : Window
 {
     private readonly ChiptuningAiClient _client;
+    private string _apiUrl = string.Empty;
+    private string _email  = string.Empty;
     private string? _droppedFilePath;
+    private IReadOnlyList<SimilarFile> _currentSimilarFiles = [];
 
     // ── Match row ─────────────────────────────────────────────────────────────
     private sealed record MatchRow(Guid FileId, string FileName, string SimilarityPct);
@@ -43,10 +56,20 @@ public partial class MainWindow : Window
     private void StartRefreshTimer()
     {
         _refreshTimer?.Stop();
-        if (_client.TokenExpiresAt is not { } expiresAt) return;
+        if (_client.RefreshToken is null) return;
 
-        var delay = expiresAt - DateTimeOffset.UtcNow - TimeSpan.FromSeconds(60);
-        if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+        // When TokenExpiresAt is null (e.g. session restored from disk without expiry),
+        // refresh immediately so the expiry is known before scheduling the next cycle.
+        TimeSpan delay;
+        if (_client.TokenExpiresAt is { } expiresAt)
+        {
+            delay = expiresAt - DateTimeOffset.UtcNow - TimeSpan.FromSeconds(60);
+            if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+        }
+        else
+        {
+            delay = TimeSpan.FromSeconds(2);
+        }
 
         _refreshTimer = new DispatcherTimer { Interval = delay };
         _refreshTimer.Tick += async (_, _) =>
@@ -55,10 +78,17 @@ public partial class MainWindow : Window
             try
             {
                 await _client.Auth.RefreshAsync();
+                // Persist new tokens so the next app start doesn't load stale credentials
+                if (!string.IsNullOrEmpty(_apiUrl))
+                    SessionStore.Save(_apiUrl, _email,
+                        _client.AccessToken  ?? string.Empty,
+                        _client.RefreshToken ?? string.Empty,
+                        _client.TokenExpiresAt);
                 StartRefreshTimer();
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error("Token refresh failed", ex);
                 ShowToast("Session expired — please sign in again.", "⚠");
             }
         };
@@ -67,10 +97,12 @@ public partial class MainWindow : Window
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
-    public MainWindow(ChiptuningAiClient client)
+    public MainWindow(ChiptuningAiClient client, string apiUrl = "", string email = "")
     {
         InitializeComponent();
         _client = client;
+        _apiUrl = apiUrl;
+        _email  = email;
         ToastList.ItemsSource = _toasts;
 
         ThemeToggleBtn.Content = ThemeManager.IsDark ? "☾" : "☀";
@@ -78,12 +110,72 @@ public partial class MainWindow : Window
 
         Loaded += async (_, _) =>
         {
+            InitLangPicker();
             await LoadProfileAsync();
             _ = LoadLookupsAsync();
             StartRefreshTimer();
         };
 
         ShowPanel("DropZone");
+    }
+
+    private void InitLangPicker()
+    {
+        foreach (var lang in LanguageManager.Languages)
+        {
+            var btn = new Button
+            {
+                Content     = BuildLangContent(lang.Flag, lang.Code),
+                Tag         = lang.Code,
+                Background  = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Cursor      = Cursors.Hand,
+                Padding     = new Thickness(8, 6, 8, 6),
+                Margin      = new Thickness(2),
+                ToolTip     = lang.Display,
+            };
+            btn.Click += LangPopupItem_Click;
+            LangGrid.Children.Add(btn);
+        }
+        UpdateLangButton();
+    }
+
+    private static StackPanel BuildLangContent(string flag, string code)
+    {
+        var sp = new StackPanel { HorizontalAlignment = System.Windows.HorizontalAlignment.Center };
+        sp.Children.Add(new TextBlock
+        {
+            Text                = flag,
+            FontFamily          = new FontFamily("Segoe UI Emoji"),
+            FontSize            = 20,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+        });
+        sp.Children.Add(new TextBlock
+        {
+            Text                = code.ToUpperInvariant(),
+            FontSize            = 9,
+            FontWeight          = FontWeights.SemiBold,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            Foreground          = (Brush)Application.Current.Resources["TextSecondary"],
+        });
+        return sp;
+    }
+
+    private void LangBtn_Click(object sender, RoutedEventArgs e)
+        => LangPopup.IsOpen = !LangPopup.IsOpen;
+
+    private void LangPopupItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string code) return;
+        LangPopup.IsOpen = false;
+        LanguageManager.Apply(code);
+        UpdateLangButton();
+    }
+
+    private void UpdateLangButton()
+    {
+        var lang = LanguageManager.Languages.FirstOrDefault(l => l.Code == LanguageManager.CurrentCode);
+        LangBtnText.Text = lang.Flag ?? "🌐";
     }
 
     // ── Maximize (manual — avoids AllowsTransparency gap bug) ────────────────
@@ -191,11 +283,9 @@ public partial class MainWindow : Window
         PanelDropZone.Visibility = name == "DropZone" ? Visibility.Visible : Visibility.Collapsed;
         PanelFiles.Visibility    = name == "Files"    ? Visibility.Visible : Visibility.Collapsed;
         PanelUpload.Visibility   = name == "Upload"   ? Visibility.Visible : Visibility.Collapsed;
-        PanelPatches.Visibility  = name == "Patches"  ? Visibility.Visible : Visibility.Collapsed;
         PanelProfile.Visibility  = name == "Profile"  ? Visibility.Visible : Visibility.Collapsed;
 
-        if (name == "Files")   _ = LoadFilesAsync();
-        if (name == "Patches") _ = LoadPatchesAsync();
+        if (name == "Files" && !_filesLoaded) _ = LoadFilesAsync();
         if (name == "Profile") _ = LoadProfileAsync();
     }
 
@@ -251,16 +341,39 @@ public partial class MainWindow : Window
 
     private async Task RunDropSearchAsync(string filePath)
     {
+        // Check for an existing .ctatrace session alongside the dropped file
+        var tracePath = TraceFile.GetTracePath(filePath);
+        if (File.Exists(tracePath))
+        {
+            var trace = TraceFile.Load(tracePath);
+            if (trace is not null)
+            {
+                var answer = MessageBox.Show(
+                    $"A previous session log was found for this file.\n\nWould you like to continue from where you left off?",
+                    "Resume Session?",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (answer == MessageBoxResult.Yes)
+                {
+                    var win = new ProcessingWindow(_client, filePath, trace);
+                    win.Owner = this;
+                    win.Show();
+                    return;
+                }
+            }
+        }
+
         _droppedFilePath         = filePath;
         DropSearchFileName.Text  = Path.GetFileName(filePath);
-        DropSearchStatus.Text    = "Computing MD5…";
+        DropSearchStatus.Text    = LanguageManager.Get("Drop.StatusMd5");
         DropInitial.Visibility   = Visibility.Collapsed;
         DropSearching.Visibility = Visibility.Visible;
 
         try
         {
             // Step 1 — exact MD5 match
-            DropSearchStatus.Text = "Searching by hash…";
+            DropSearchStatus.Text = LanguageManager.Get("Drop.StatusHash");
             var md5   = ComputeMd5(filePath);
             var exact = await _client.Files.GetByHashAsync(md5);
 
@@ -269,20 +382,22 @@ public partial class MainWindow : Window
                 ShowMatchDialog(filePath,
                 [
                     new MatchRow(exact.FileId, exact.FileName, "100% (exact)")
-                ]);
+                ], isExact: true);
                 return;
             }
 
-            // Step 2 — chunk similarity across all files
-            DropSearchStatus.Text = "Searching by content…";
+            // Step 2 — similarity across all files
+            DropSearchStatus.Text = LanguageManager.Get("Drop.StatusContent");
             IReadOnlyList<SimilarFile> similar;
             try   { similar = await _client.Files.FindSimilarAsync(filePath); }
             catch { similar = []; }
 
             if (similar.Count > 0)
             {
+                _currentSimilarFiles = similar;
                 ShowMatchDialog(filePath,
-                    similar.Select(m => new MatchRow(m.FileId, m.FileName, m.MatchPercentage)));
+                    similar.Select(m => new MatchRow(m.FileId, m.FileName, m.MatchPercentage)),
+                    isExact: false);
                 return;
             }
 
@@ -294,16 +409,39 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLogger.Error($"Drop search failed for '{Path.GetFileName(filePath)}'", ex);
             ResetDropZone();
             ShowToast($"Search failed: {ex.Message}", "✕");
         }
     }
 
-    private void ShowMatchDialog(string filePath, IEnumerable<MatchRow> rows)
+    private bool _matchIsExact;
+    private bool _filesLoaded;
+
+    private void ShowMatchDialog(string filePath, IEnumerable<MatchRow> rows, bool isExact)
     {
-        MatchFileName.Text          = Path.GetFileName(filePath);
-        MatchList.ItemsSource       = rows.ToList();
-        MatchList.SelectedIndex     = 0;
+        _matchIsExact = isExact;
+        var rowList = rows.ToList();
+
+        MatchFileName.Text = Path.GetFileName(filePath);
+        MatchList.ItemsSource   = rowList;
+        MatchList.SelectedIndex = 0;
+
+        if (isExact)
+        {
+            MatchSubtitle.Text                  = LanguageManager.Get("Match.SubtitleExact");
+            MatchWarningPanel.Visibility        = Visibility.Collapsed;
+            MatchButtonsExact.Visibility        = Visibility.Visible;
+            MatchButtonsPartial.Visibility      = Visibility.Collapsed;
+        }
+        else
+        {
+            MatchSubtitle.Text             = $"{rowList.Count} similar file(s) found. Choose how to proceed.";
+            MatchWarningPanel.Visibility   = Visibility.Visible;
+            MatchButtonsExact.Visibility   = Visibility.Collapsed;
+            MatchButtonsPartial.Visibility = Visibility.Visible;
+        }
+
         DropSearching.Visibility    = Visibility.Collapsed;
         DropInitial.Visibility      = Visibility.Visible;
         PanelMatchDialog.Visibility = Visibility.Visible;
@@ -330,6 +468,29 @@ public partial class MainWindow : Window
         OpenFileDetail(row.FileId, row.FileName);
     }
 
+    private void MatchAdd_Click(object sender, RoutedEventArgs e)
+    {
+        PanelMatchDialog.Visibility = Visibility.Collapsed;
+        if (_droppedFilePath is not null)
+        {
+            UploadFilePath.Text = _droppedFilePath;
+            ShowPanel("Upload");
+        }
+        ResetDropZone();
+    }
+
+    private void MatchUse_Click(object sender, RoutedEventArgs e)
+    {
+        if (_droppedFilePath is null || _currentSimilarFiles.Count == 0) return;
+        var filePath = _droppedFilePath;
+        var best     = _currentSimilarFiles[0];
+        PanelMatchDialog.Visibility = Visibility.Collapsed;
+        ResetDropZone();
+        var win = new FileDetailWindow(_client, best.FileId, best.FileName, sourceFilePath: filePath);
+        win.Owner = this;
+        win.Show();
+    }
+
     private void OpenFileDetail(Guid fileId, string fileName)
     {
         var win = new FileDetailWindow(_client, fileId, fileName);
@@ -350,55 +511,63 @@ public partial class MainWindow : Window
         try
         {
             var p = await _client.Auth.GetProfileAsync();
+            _email = p.Email;
             ProfileLabel.Text = p.Email;
-            ProfEmail.Text    = $"Email:    {p.Email}";
-            ProfTier.Text     = $"Plan:     {p.Tier}";
-            ProfStorage.Text  = $"Storage:  {p.StorageUsedBytes / 1024:N0} KB used";
+            ProfEmail.Text    = p.Email;
+            ProfTier.Text     = $"Plan: {p.Tier}";
+
+            var usedMb  = p.StorageUsedBytes  / (1024.0 * 1024.0);
+            var limitMb = p.StorageLimitBytes / (1024.0 * 1024.0);
+            var pct     = limitMb > 0 ? Math.Min(100.0, usedMb / limitMb * 100.0) : 0;
+
+            ProfStorageBar.Value = pct;
+            ProfStorage.Text = limitMb >= 1024
+                ? $"{usedMb / 1024:N2} GB of {limitMb / 1024:N0} GB used  ({pct:N1}%)"
+                : $"{usedMb:N1} MB of {limitMb:N0} MB used  ({pct:N1}%)";
         }
-        catch { }
+        catch (Exception ex) { AppLogger.Error("LoadProfile failed", ex); }
     }
 
     // ── Files ─────────────────────────────────────────────────────────────────
 
     private async Task LoadFilesAsync()
     {
-        FilesStatus.Text      = "Loading…";
-        FilesGrid.ItemsSource = null;
+        FilesStatus.Text          = "Loading…";
+        FilesGrid.ItemsSource     = null;
+        FilesLoadingBar.Visibility = Visibility.Visible;
         try
         {
             var page = await _client.Files.ListAsync();
 
-            FilesGrid.ItemsSource = page.Items.Select(f => new
-            {
+            FilesGrid.ItemsSource = page.Items.Select(f => new FileRow(
                 f.FileId,
                 f.FileName,
-                Vehicle  = $"{f.VehicleMake} {f.VehicleModel} {f.VehicleVariant}",
-                Ecu      = $"{f.ECUMake} {f.ECUModel}",
-                Read     = $"{f.ReadHardware} / {f.ReadMode}",
-                SizeKb   = f.FileSize / 1024,
+                $"{f.VehicleMake} {f.VehicleModel} {f.VehicleVariant}",
+                $"{f.ECUMake} {f.ECUModel}",
+                $"{f.ReadHardware} / {f.ReadMode}",
+                f.FileSize / 1024,
                 f.PatchCount,
-                Uploaded = f.UploadedAt.ToString("dd MMM yyyy"),
-            }).ToList();
+                f.UploadedAt.ToString("dd MMM yyyy")
+            )).ToList();
             FilesStatus.Text = $"{page.Total} file(s) — double-click to open details";
+            _filesLoaded = true;
         }
         catch (Exception ex)
         {
+            AppLogger.Error("LoadFiles failed", ex);
             FilesStatus.Text = $"Error: {ex.Message}";
             ShowToast($"Failed to load files: {ex.Message}", "✕");
+        }
+        finally
+        {
+            FilesLoadingBar.Visibility = Visibility.Collapsed;
         }
     }
 
     private void FilesGrid_DoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (FilesGrid.SelectedItem is null) return;
-
-        var item = FilesGrid.SelectedItem;
-        var fileIdProp = item.GetType().GetProperty("FileId");
-        var fileNameProp = item.GetType().GetProperty("FileName");
-        if (fileIdProp?.GetValue(item) is not Guid fileId) return;
-        var fileName = fileNameProp?.GetValue(item) as string ?? "File";
-
-        OpenFileDetail(fileId, fileName);
+        if (FilesGrid.SelectedItem is not FileRow row) return;
+        OpenFileDetail(row.FileId, row.FileName);
     }
 
     // ── Upload ────────────────────────────────────────────────────────────────
@@ -455,19 +624,26 @@ public partial class MainWindow : Window
 
             if (result.IsDuplicate)
             {
-                UploadStatus.Text = $"Duplicate detected — existing FileId: {result.FileId}";
-                ShowToast("Duplicate file detected.", "ℹ");
+                UploadStatus.Text = string.Empty;
+                ShowToast("Duplicate file — opening existing record.", "ℹ");
+                AppLogger.Info($"Duplicate upload: FileId={result.FileId}");
             }
             else
             {
-                UploadStatus.Text = $"Upload complete! FileId: {result.FileId}";
-                ShowToast("File uploaded successfully.", "✓");
+                UploadStatus.Text = string.Empty;
+                ShowToast("Uploaded! Opening file details…", "✓");
+                AppLogger.Info($"Upload complete: FileId={result.FileId}");
             }
+            _filesLoaded = false; // force refresh next time Files panel is shown
+            OpenFileDetail(result.FileId, meta.VehicleMake is { Length: > 0 } vm
+                ? $"{vm} {meta.VehicleModel}".Trim()
+                : Path.GetFileName(UploadFilePath.Text));
         }
         catch (Exception ex)
         {
-            UploadStatus.Text = $"Error: {ex.Message}";
-            ShowToast($"Upload failed: {ex.Message}", "✕");
+            AppLogger.Error($"Upload failed for '{Path.GetFileName(UploadFilePath.Text)}'", ex);
+            UploadStatus.Text = "Upload failed. Check the log for details.";
+            ShowToast("Upload failed.", "✕");
         }
         finally
         {
@@ -475,40 +651,104 @@ public partial class MainWindow : Window
         }
     }
 
-    // ── Patches ───────────────────────────────────────────────────────────────
-
-    private async Task LoadPatchesAsync()
-    {
-        PatchesStatus.Text      = "Select a file in the Files tab to see its patches.";
-        PatchesGrid.ItemsSource = null;
-        await Task.CompletedTask;
-    }
-
     // ── Lookups / autocomplete ────────────────────────────────────────────────
 
     private async Task LoadLookupsAsync()
     {
-        (string Type, ComboBox Cb)[] targets =
+        // Flat static lists (not cascade-dependent)
+        (string Type, ComboBox Cb)[] flat =
         [
             ("VehicleClass", MdVehicleClass),
-            ("VehicleMake",  MdVehicleMake),
-            ("VehicleModel", MdVehicleModel),
             ("EngineType",   MdEngineType),
             ("ECUType",      MdECUType),
-            ("ECUMake",      MdECUMake),
-            ("ECUModel",     MdECUModel),
             ("ReadHardware", MdReadHardware),
             ("ReadMode",     MdReadMode),
         ];
 
-        foreach (var (type, cb) in targets)
+        foreach (var (type, cb) in flat)
         {
             try
             {
                 var values = (await _client.Lookups.GetAsync(type)).ToList();
                 AttachAutocomplete(cb, values);
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Error($"Lookup load failed: {type}", ex); }
+        }
+
+        // Cascade: Vehicle
+        MdVehicleClass.SelectionChanged += async (_, e) =>
+        {
+            if (e.AddedItems.Count == 0) return;
+            var cls = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
+            await ReloadCascadeAsync(MdVehicleMake, "VehicleMake", vehicleClass: cls);
+            ClearAndReset(MdVehicleModel, MdVehicleVariant);
+        };
+
+        MdVehicleMake.SelectionChanged += async (_, e) =>
+        {
+            if (e.AddedItems.Count == 0) return;
+            var cls  = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
+            var make = MdVehicleMake.SelectedItem as string ?? MdVehicleMake.Text;
+            await ReloadCascadeAsync(MdVehicleModel, "VehicleModel", vehicleClass: cls, vehicleMake: make);
+            ClearAndReset(MdVehicleVariant);
+        };
+
+        MdVehicleModel.SelectionChanged += async (_, e) =>
+        {
+            if (e.AddedItems.Count == 0) return;
+            var cls   = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
+            var make  = MdVehicleMake.SelectedItem as string  ?? MdVehicleMake.Text;
+            var model = MdVehicleModel.SelectedItem as string ?? MdVehicleModel.Text;
+            await ReloadCascadeAsync(MdVehicleVariant, "VehicleVariant",
+                vehicleClass: cls, vehicleMake: make, vehicleModel: model);
+        };
+
+        // Cascade: ECU
+        MdECUType.SelectionChanged += async (_, e) =>
+        {
+            if (e.AddedItems.Count == 0) return;
+            var type = MdECUType.SelectedItem as string ?? MdECUType.Text;
+            await ReloadCascadeAsync(MdECUMake, "ECUMake", ecuType: type);
+            ClearAndReset(MdECUModel);
+        };
+
+        MdECUMake.SelectionChanged += async (_, e) =>
+        {
+            if (e.AddedItems.Count == 0) return;
+            var type = MdECUType.SelectedItem as string ?? MdECUType.Text;
+            var make = MdECUMake.SelectedItem as string ?? MdECUMake.Text;
+            await ReloadCascadeAsync(MdECUModel, "ECUModel", ecuType: type, ecuMake: make);
+        };
+
+        // Seed initial cascaded lists with all values (no filter yet)
+        await ReloadCascadeAsync(MdVehicleMake,   "VehicleMake");
+        await ReloadCascadeAsync(MdVehicleModel,  "VehicleModel");
+        await ReloadCascadeAsync(MdVehicleVariant,"VehicleVariant");
+        await ReloadCascadeAsync(MdECUMake,       "ECUMake");
+        await ReloadCascadeAsync(MdECUModel,      "ECUModel");
+    }
+
+    private async Task ReloadCascadeAsync(
+        ComboBox cb, string field,
+        string? vehicleClass = null, string? vehicleMake = null, string? vehicleModel = null,
+        string? ecuType = null, string? ecuMake = null)
+    {
+        try
+        {
+            var values = (await _client.Lookups.GetCascadeAsync(
+                field, vehicleClass, vehicleMake, vehicleModel, ecuType, ecuMake)).ToList();
+            cb.Text = string.Empty;
+            AttachAutocomplete(cb, values);
+        }
+        catch (Exception ex) { AppLogger.Error($"Cascade load failed: {field}", ex); }
+    }
+
+    private static void ClearAndReset(params ComboBox[] combos)
+    {
+        foreach (var cb in combos)
+        {
+            cb.Text       = string.Empty;
+            cb.ItemsSource = Array.Empty<string>();
         }
     }
 

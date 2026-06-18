@@ -22,9 +22,16 @@
                     MouseLeftButtonDown="TitleBar_MouseDown">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
-                        <TextBlock Text="⚡" FontSize="16" Foreground="{DynamicResource AccentButtonBg}" Margin="0,0,8,0"/>
-                        <TextBlock Text="Chiptuning.Ai" FontSize="14" FontWeight="Bold"
+                        <TextBlock Text="⚡" FontSize="16" Foreground="{DynamicResource AccentButtonBg}" Margin="0,0,8,0"
+                                   FontFamily="Segoe UI Emoji, Segoe UI"/>
+                        <TextBlock Text="Chiptuning"
+                                   FontFamily="{StaticResource JuraFont}"
+                                   FontSize="15" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        <TextBlock Text=".Ai"
+                                   FontFamily="{StaticResource JuraFont}"
+                                   FontSize="15" FontWeight="Bold"
+                                   Foreground="{DynamicResource AccentButtonBg}" VerticalAlignment="Center"/>
                         <TextBlock Text="  SDK Dashboard" FontSize="13"
                                    Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
                     </StackPanel>
@@ -74,13 +81,41 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Language selector -->
+                        <Button x:Name="LangBtn" Margin="0,0,10,0" Padding="8,4"
+                                Background="{DynamicResource GhostButtonBg}"
+                                Foreground="{DynamicResource TextSecondary}"
+                                BorderThickness="0" Cursor="Hand"
+                                ToolTip="Change interface language"
+                                Click="LangBtn_Click">
+                            <TextBlock x:Name="LangBtnText"
+                                       FontFamily="Segoe UI Emoji" FontSize="16"
+                                       VerticalAlignment="Center"/>
+                        </Button>
+                        <Popup x:Name="LangPopup" StaysOpen="False" AllowsTransparency="True"
+                               PlacementTarget="{Binding ElementName=LangBtn}"
+                               Placement="Bottom" HorizontalOffset="-4">
+                            <Border Background="{DynamicResource BgMid}"
+                                    BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                                    Padding="6" CornerRadius="6">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="16" ShadowDepth="6"
+                                                      Opacity="0.5" Color="Black"/>
+                                </Border.Effect>
+                                <UniformGrid x:Name="LangGrid" Columns="2"/>
+                            </Border>
+                        </Popup>
+
                         <Button Content="—" Click="Minimize_Click" Foreground="{DynamicResource TextSecondary}"
-                                Background="Transparent" BorderThickness="0" FontSize="16" Cursor="Hand" Width="28"/>
+                                Background="Transparent" BorderThickness="0" FontSize="16" Cursor="Hand" Width="28"
+                                ToolTip="Minimize"/>
                         <Button x:Name="MaximizeBtn" Content="☐" Click="Maximize_Click"
                                 Foreground="{DynamicResource TextSecondary}"
-                                Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Width="28"/>
+                                Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Width="28"
+                                ToolTip="Maximize / restore"/>
                         <Button Content="✕" Click="Close_Click" Foreground="{DynamicResource TextSecondary}"
-                                Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Width="28"/>
+                                Background="Transparent" BorderThickness="0" FontSize="14" Cursor="Hand" Width="28"
+                                ToolTip="Close"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -95,30 +130,56 @@
                 <!-- Sidebar -->
                 <Border Grid.Column="0" Background="{DynamicResource BgMid}">
                     <DockPanel Margin="12,20,12,12">
-                        <Button DockPanel.Dock="Bottom" Content="🚪  Logout"
+                        <Button DockPanel.Dock="Bottom"
                                 Style="{StaticResource AccentButton}"
-                                HorizontalAlignment="Stretch" Click="Logout_Click"/>
+                                HorizontalAlignment="Stretch" Click="Logout_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8CB;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Width="20" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource Nav.Logout}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <StackPanel>
-                            <Button x:Name="NavDropZone" Content="🎯  Drop Zone"
+                            <Button x:Name="NavDropZone"
                                     Style="{StaticResource GhostButton}"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                    Margin="0,0,0,8" Click="Nav_Click" Tag="DropZone"/>
-                            <Button x:Name="NavFiles"   Content="📁  Files"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="DropZone">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE9C7;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                               Width="20" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Nav.DropZone}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="NavFiles"
                                     Style="{StaticResource GhostButton}"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Files"/>
-                            <Button x:Name="NavUpload"  Content="⬆  Upload"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Files">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                               Width="20" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Nav.Files}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="NavUpload"
                                     Style="{StaticResource GhostButton}"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Upload"/>
-                            <Button x:Name="NavPatches" Content="🩹  Patches"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Upload">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                               Width="20" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Nav.Upload}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="NavProfile"
                                     Style="{StaticResource GhostButton}"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Patches"/>
-                            <Button x:Name="NavProfile" Content="👤  Profile"
-                                    Style="{StaticResource GhostButton}"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Profile"/>
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="Profile">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                               Width="20" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource Nav.Profile}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -145,27 +206,94 @@
                                     VerticalAlignment="Center" HorizontalAlignment="Center">
                             <TextBlock Text="⬇" FontSize="40"
                                        Foreground="{DynamicResource TextSecondary}"
+                                       FontFamily="Segoe UI Emoji, Segoe UI"
                                        HorizontalAlignment="Center" Margin="0,0,0,14"/>
-                            <TextBlock Text="DROP ECU FILE HERE" FontSize="16" FontWeight="Bold"
+                            <TextBlock Text="{DynamicResource Drop.Title}" FontSize="16" FontWeight="Bold"
                                        Foreground="{DynamicResource TextPrimary}"
                                        HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                            <TextBlock Text="Match search runs automatically — no inputs needed"
+                            <TextBlock Text="{DynamicResource Drop.Subtitle}"
                                        FontSize="12" Foreground="{DynamicResource TextSecondary}"
                                        HorizontalAlignment="Center" Margin="0,0,0,24"
                                        TextAlignment="Center"/>
-                            <Button Content="BROWSE FILE" Style="{StaticResource GhostButton}"
+                            <Button Content="{DynamicResource Drop.BrowseBtn}"
+                                    Style="{StaticResource GhostButton}"
                                     HorizontalAlignment="Center" Click="BrowseDropZone_Click"/>
                         </StackPanel>
 
                         <!-- Auto-searching overlay (shown immediately on file select) -->
                         <Grid x:Name="DropSearching" Visibility="Collapsed">
                             <Rectangle Fill="{DynamicResource BgDark}" Opacity="0.85"/>
+
+                            <!-- Animated progress bar along top of overlay -->
+                            <ProgressBar IsIndeterminate="True" Height="2" VerticalAlignment="Top"
+                                         Foreground="{DynamicResource AccentButtonBg}"
+                                         Background="Transparent"/>
+
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <TextBlock x:Name="DropSearchFileName" FontSize="13" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimary}"
-                                           HorizontalAlignment="Center" Margin="0,0,0,12"
+                                           HorizontalAlignment="Center" Margin="0,0,0,20"
                                            TextTrimming="CharacterEllipsis" MaxWidth="400"/>
-                                <TextBlock x:Name="DropSearchStatus" FontSize="14"
+
+                                <!-- Animated spinner: 3 pulsing dots -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                            Margin="0,0,0,16">
+                                    <Ellipse x:Name="Dot1" Width="8" Height="8" Margin="4,0"
+                                             Fill="{DynamicResource AccentButtonBg}">
+                                        <Ellipse.Triggers>
+                                            <EventTrigger RoutedEvent="Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimationUsingKeyFrames
+                                                            Storyboard.TargetProperty="Opacity">
+                                                            <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:0"/>
+                                                            <LinearDoubleKeyFrame Value="0.2" KeyTime="0:0:0.4"/>
+                                                            <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:1.2"/>
+                                                        </DoubleAnimationUsingKeyFrames>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Ellipse.Triggers>
+                                    </Ellipse>
+                                    <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="4,0"
+                                             Fill="{DynamicResource AccentButtonBg}">
+                                        <Ellipse.Triggers>
+                                            <EventTrigger RoutedEvent="Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimationUsingKeyFrames
+                                                            Storyboard.TargetProperty="Opacity"
+                                                            BeginTime="0:0:0.2">
+                                                            <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:0"/>
+                                                            <LinearDoubleKeyFrame Value="0.2" KeyTime="0:0:0.4"/>
+                                                            <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:1.2"/>
+                                                        </DoubleAnimationUsingKeyFrames>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Ellipse.Triggers>
+                                    </Ellipse>
+                                    <Ellipse x:Name="Dot3" Width="8" Height="8" Margin="4,0"
+                                             Fill="{DynamicResource AccentButtonBg}">
+                                        <Ellipse.Triggers>
+                                            <EventTrigger RoutedEvent="Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimationUsingKeyFrames
+                                                            Storyboard.TargetProperty="Opacity"
+                                                            BeginTime="0:0:0.4">
+                                                            <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:0"/>
+                                                            <LinearDoubleKeyFrame Value="0.2" KeyTime="0:0:0.4"/>
+                                                            <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:1.2"/>
+                                                        </DoubleAnimationUsingKeyFrames>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Ellipse.Triggers>
+                                    </Ellipse>
+                                </StackPanel>
+
+                                <TextBlock x:Name="DropSearchStatus" FontSize="13"
                                            Foreground="{DynamicResource TextSecondary}"
                                            HorizontalAlignment="Center"/>
                             </StackPanel>
@@ -176,27 +304,39 @@
                     <Grid x:Name="PanelFiles" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Text="Files" FontSize="20" FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
+                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,12"/>
 
-                        <DataGrid x:Name="FilesGrid" Grid.Row="1"
-                                  MouseDoubleClick="FilesGrid_DoubleClick">
+                        <ProgressBar x:Name="FilesLoadingBar" Grid.Row="1" Height="2"
+                                     IsIndeterminate="True" Visibility="Collapsed"
+                                     Margin="0,0,0,12"/>
+
+                        <DataGrid x:Name="FilesGrid" Grid.Row="2"
+                                  MouseDoubleClick="FilesGrid_DoubleClick"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  IsReadOnly="True"
+                                  SelectionUnit="FullRow"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  HorizontalAlignment="Stretch"
+                                  ToolTip="Double-click a row to open file details">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="200"/>
-                                <DataGridTextColumn Header="Vehicle"   Binding="{Binding Vehicle}"  Width="180"/>
-                                <DataGridTextColumn Header="ECU"       Binding="{Binding Ecu}"      Width="160"/>
-                                <DataGridTextColumn Header="Read"      Binding="{Binding Read}"     Width="140"/>
+                                <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="2*"/>
+                                <DataGridTextColumn Header="Vehicle"   Binding="{Binding Vehicle}"  Width="2*"/>
+                                <DataGridTextColumn Header="ECU"       Binding="{Binding Ecu}"      Width="1.5*"/>
+                                <DataGridTextColumn Header="Read"      Binding="{Binding Read}"     Width="1.5*"/>
                                 <DataGridTextColumn Header="Size (KB)" Binding="{Binding SizeKb}"   Width="80"/>
-                                <DataGridTextColumn Header="Patches"   Binding="{Binding PatchCount}" Width="70"/>
-                                <DataGridTextColumn Header="Uploaded"  Binding="{Binding Uploaded}" Width="130"/>
+                                <DataGridTextColumn Header="Patches"   Binding="{Binding PatchCount}" Width="65"/>
+                                <DataGridTextColumn Header="Uploaded"  Binding="{Binding Uploaded}" Width="120"/>
                             </DataGrid.Columns>
                         </DataGrid>
 
-                        <TextBlock x:Name="FilesStatus" Grid.Row="2"
+                        <TextBlock x:Name="FilesStatus" Grid.Row="3"
                                    Foreground="{DynamicResource TextSecondary}"
                                    FontSize="12" Margin="0,8,0,0"/>
                     </Grid>
@@ -216,9 +356,11 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="UploadFilePath" Grid.Column="0"
                                          Style="{StaticResource DarkTextBox}"
-                                         Margin="0,0,8,0" IsReadOnly="True"/>
+                                         Margin="0,0,8,0" IsReadOnly="True"
+                                         ToolTip="Path to the ECU binary file to upload"/>
                                 <Button Grid.Column="1" Content="Browse…"
                                         Style="{StaticResource GhostButton}"
+                                        ToolTip="Select ECU binary file"
                                         Click="Browse_Click"/>
                             </Grid>
 
@@ -234,39 +376,48 @@
 
                                 <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,12,12">
                                     <Label Content="Vehicle Class *"/>
-                                    <ComboBox x:Name="MdVehicleClass" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdVehicleClass" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="Vehicle class — filters makes below"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,0,12">
                                     <Label Content="Vehicle Make *"/>
-                                    <ComboBox x:Name="MdVehicleMake" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdVehicleMake" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="Vehicle make — auto-filtered by class"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,12,12">
                                     <Label Content="Model *"/>
-                                    <ComboBox x:Name="MdVehicleModel" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdVehicleModel" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="Vehicle model — auto-filtered by make"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,0,12">
                                     <Label Content="Variant *"/>
-                                    <TextBox x:Name="MdVehicleVariant" Style="{StaticResource DarkTextBox}"/>
+                                    <ComboBox x:Name="MdVehicleVariant" Style="{StaticResource DarkComboBox}" IsEditable="True"
+                                              ToolTip="Vehicle variant / trim — auto-filtered by model"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,12,12">
                                     <Label Content="Engine Type *"/>
-                                    <ComboBox x:Name="MdEngineType" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdEngineType" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="Engine type or displacement (e.g. 2.0 TDI)"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Grid.Row="2" Margin="0,0,0,12">
                                     <Label Content="ECU Type *"/>
-                                    <ComboBox x:Name="MdECUType" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdECUType" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="ECU / controller type (e.g. EDC17) — filters ECU makes below"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="0" Grid.Row="3" Margin="0,0,12,12">
                                     <Label Content="ECU Make *"/>
-                                    <ComboBox x:Name="MdECUMake" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdECUMake" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="ECU manufacturer — auto-filtered by ECU type"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Grid.Row="3" Margin="0,0,0,12">
                                     <Label Content="ECU Model *"/>
-                                    <ComboBox x:Name="MdECUModel" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdECUModel" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="ECU model / part number — auto-filtered by ECU make"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="0" Grid.Row="4" Margin="0,0,12,12">
                                     <Label Content="Read Hardware *"/>
-                                    <ComboBox x:Name="MdReadHardware" Style="{StaticResource DarkComboBox}"/>
+                                    <ComboBox x:Name="MdReadHardware" Style="{StaticResource DarkComboBox}"
+                                              ToolTip="Hardware tool used to read this ECU (e.g. Alientech KESS3)"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Grid.Row="4" Margin="0,0,0,12">
                                     <Label Content="Read Mode *"/>
@@ -283,19 +434,23 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
                                     <Label Content="HW Number"/>
-                                    <TextBox x:Name="MdHWNumber" Style="{StaticResource DarkTextBox}"/>
+                                    <TextBox x:Name="MdHWNumber" Style="{StaticResource DarkTextBox}"
+                                             ToolTip="Controller hardware version number (optional)"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,8,0">
                                     <Label Content="SW Number"/>
-                                    <TextBox x:Name="MdSWNumber" Style="{StaticResource DarkTextBox}"/>
+                                    <TextBox x:Name="MdSWNumber" Style="{StaticResource DarkTextBox}"
+                                             ToolTip="Controller software version number (optional)"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Margin="0,0,8,0">
                                     <Label Content="Power (kW)"/>
-                                    <TextBox x:Name="MdPower" Style="{StaticResource DarkTextBox}"/>
+                                    <TextBox x:Name="MdPower" Style="{StaticResource DarkTextBox}"
+                                             ToolTip="Stock engine power output in kilowatts (optional)"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="3">
                                     <Label Content="Torque (Nm)"/>
-                                    <TextBox x:Name="MdTorque" Style="{StaticResource DarkTextBox}"/>
+                                    <TextBox x:Name="MdTorque" Style="{StaticResource DarkTextBox}"
+                                             ToolTip="Stock engine torque in Newton-metres (optional)"/>
                                 </StackPanel>
                             </Grid>
 
@@ -305,32 +460,10 @@
                                        FontSize="12" Margin="0,0,0,12"/>
                             <Button Content="Upload File" Style="{StaticResource AccentButton}"
                                     HorizontalAlignment="Left" Height="40" Width="140"
+                                    ToolTip="Upload the ECU file with the metadata above"
                                     Click="UploadFile_Click"/>
                         </StackPanel>
                     </ScrollViewer>
-
-                    <!-- ── Patches panel ── -->
-                    <Grid x:Name="PanelPatches" Visibility="Collapsed">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Text="Patches" FontSize="20" FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
-                        <DataGrid x:Name="PatchesGrid" Grid.Row="1">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Patch ID"    Binding="{Binding ShortId}"     Width="120"/>
-                                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Version"     Binding="{Binding Version}"     Width="80"/>
-                                <DataGridTextColumn Header="Size (KB)"   Binding="{Binding SizeKb}"      Width="80"/>
-                                <DataGridTextColumn Header="Created"     Binding="{Binding Created}"     Width="130"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                        <TextBlock x:Name="PatchesStatus" Grid.Row="2"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   FontSize="12" Margin="0,8,0,0"/>
-                    </Grid>
 
                     <!-- ── Profile panel ── -->
                     <StackPanel x:Name="PanelProfile" Visibility="Collapsed">
@@ -338,11 +471,18 @@
                                    Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,24"/>
                         <Border Background="{DynamicResource BgPanel}" Padding="24">
                             <StackPanel>
-                                <TextBlock x:Name="ProfEmail"   FontSize="15"
-                                           Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,12"/>
-                                <TextBlock x:Name="ProfTier"    FontSize="13"
-                                           Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
-                                <TextBlock x:Name="ProfStorage" FontSize="13"
+                                <TextBlock x:Name="ProfEmail" FontSize="15" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                                <TextBlock x:Name="ProfTier" FontSize="13"
+                                           Foreground="{DynamicResource AccentButtonBg}" Margin="0,0,0,20"/>
+
+                                <TextBlock Text="STORAGE" FontSize="10" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,6"/>
+                                <ProgressBar x:Name="ProfStorageBar" Height="6" Margin="0,0,0,6"
+                                             Minimum="0" Maximum="100" Value="0"
+                                             Foreground="{DynamicResource AccentButtonBg}"
+                                             Background="{DynamicResource Border}"/>
+                                <TextBlock x:Name="ProfStorage" FontSize="12"
                                            Foreground="{DynamicResource TextSecondary}"/>
                             </StackPanel>
                         </Border>
@@ -356,21 +496,22 @@
             <Grid x:Name="PanelMatchDialog" Grid.RowSpan="2" Visibility="Collapsed"
                   Panel.ZIndex="50" Background="#CC000000">
                 <Border Background="{DynamicResource BgPanel}" Padding="32"
-                        Width="540" MaxHeight="460"
+                        Width="560" MaxHeight="500"
                         VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Border.Effect>
                         <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="8"
                                           Opacity="0.65" Direction="270"/>
                     </Border.Effect>
                     <StackPanel>
-                        <TextBlock Text="FILE MATCH FOUND" FontSize="11" FontWeight="Bold"
+                        <TextBlock x:Name="MatchDialogTitle"
+                                   Text="{DynamicResource Match.Title}" FontSize="11" FontWeight="Bold"
                                    Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
                         <TextBlock x:Name="MatchFileName" FontSize="16" FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimary}"
                                    TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
-                        <TextBlock Text="This file already exists in the database. Select a match to open."
-                                   FontSize="12" Foreground="{DynamicResource TextSecondary}"
-                                   Margin="0,0,0,16"/>
+                        <TextBlock x:Name="MatchSubtitle" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,16"/>
+
                         <DataGrid x:Name="MatchList" MaxHeight="200" IsReadOnly="True"
                                   SelectionMode="Single">
                             <DataGrid.Columns>
@@ -378,12 +519,42 @@
                                 <DataGridTextColumn Header="Match %"   Binding="{Binding SimilarityPct}" Width="90"/>
                             </DataGrid.Columns>
                         </DataGrid>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                    Margin="0,20,0,0">
-                            <Button Content="CANCEL" Style="{StaticResource GhostButton}"
+
+                        <!-- Warning shown for partial matches -->
+                        <Border x:Name="MatchWarningPanel" Visibility="Collapsed"
+                                Background="#1AFBBF00" BorderBrush="#40FBBF00" BorderThickness="1"
+                                Padding="12,10" Margin="0,14,0,0">
+                            <TextBlock TextWrapping="Wrap" FontSize="12"
+                                       Foreground="#FBBF00">
+                                ⚠  Only add files you know are <Run FontWeight="Bold">original and unmodified</Run>.
+                                Adding a modified file as a parent will corrupt the tuning chain.
+                                Use <Run FontWeight="Bold">USE</Run> to apply existing patches to this file instead.
+                            </TextBlock>
+                        </Border>
+
+                        <!-- Exact match buttons -->
+                        <StackPanel x:Name="MatchButtonsExact" Orientation="Horizontal"
+                                    HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="{DynamicResource Match.Cancel}"
+                                    Style="{StaticResource GhostButton}"
                                     Margin="0,0,8,0" Click="MatchClose_Click"/>
-                            <Button Content="OPEN FILE" Style="{StaticResource AccentButton}"
+                            <Button Content="{DynamicResource Match.OpenFile}"
+                                    Style="{StaticResource AccentButton}"
                                     Click="MatchOpen_Click"/>
+                        </StackPanel>
+
+                        <!-- Partial match buttons -->
+                        <StackPanel x:Name="MatchButtonsPartial" Orientation="Horizontal"
+                                    HorizontalAlignment="Right" Margin="0,20,0,0" Visibility="Collapsed">
+                            <Button Content="{DynamicResource Match.Cancel}"
+                                    Style="{StaticResource GhostButton}"
+                                    Margin="0,0,8,0" Click="MatchClose_Click"/>
+                            <Button Content="{DynamicResource Match.Add}"
+                                    Style="{StaticResource GhostButton}"
+                                    Margin="0,0,8,0" Click="MatchAdd_Click"/>
+                            <Button Content="{DynamicResource Match.Use}"
+                                    Style="{StaticResource AccentButton}"
+                                    Click="MatchUse_Click"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

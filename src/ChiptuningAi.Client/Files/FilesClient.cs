@@ -113,6 +113,14 @@ public sealed class FilesClient
     }
 
     /// <summary>
+    /// Downloads the original ECU binary for a file and returns its raw bytes.
+    /// </summary>
+    /// <param name="fileId">The file identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task<byte[]> DownloadAsync(Guid fileId, CancellationToken cancellationToken = default)
+        => _client.GetBinaryAsync($"/api/files/{fileId}/download", cancellationToken);
+
+    /// <summary>
     /// Soft-deletes a file. The file is hidden immediately and permanently purged after 30 days.
     /// </summary>
     /// <param name="fileId">The file identifier to delete.</param>

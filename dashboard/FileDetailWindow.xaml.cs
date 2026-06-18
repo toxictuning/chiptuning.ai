@@ -1,26 +1,53 @@
+using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using ChiptuningAi.Client;
 using ChiptuningAi.Client.Files;
+using ChiptuningAi.Dashboard.Services;
+using Microsoft.Win32;
 
 namespace ChiptuningAi.Dashboard;
+
+file sealed class PatchRow : INotifyPropertyChanged
+{
+    public Guid   PatchId     { get; init; }
+    public string Description { get; init; } = "";
+    public string Version     { get; init; } = "";
+    public string SizeKb      { get; init; } = "";
+    public string Created     { get; init; } = "";
+
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set { _isSelected = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected))); }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+}
 
 public partial class FileDetailWindow : Window
 {
     private readonly ChiptuningAiClient _client;
     private readonly Guid _fileId;
+    private readonly string? _prefilledSourcePath;
 
-    public FileDetailWindow(ChiptuningAiClient client, Guid fileId, string? displayName = null)
+    public FileDetailWindow(ChiptuningAiClient client, Guid fileId, string? displayName = null, string? sourceFilePath = null)
     {
         InitializeComponent();
         _client = client;
         _fileId = fileId;
+        _prefilledSourcePath = sourceFilePath;
         TitleText.Text = displayName ?? "File Detail";
-
-        HighlightTab(TabPatches);
-        Loaded += async (_, _) => await LoadAsync();
+        Loaded += async (_, _) =>
+        {
+            if (_prefilledSourcePath is not null)
+                GenerateSourcePath.Text = _prefilledSourcePath;
+            await LoadAsync();
+        };
     }
 
     // ── Title bar ─────────────────────────────────────────────────────────────
@@ -65,64 +92,37 @@ public partial class FileDetailWindow : Window
     {
         if (WindowState == WindowState.Normal && _isManuallyMaximized)
         {
-            Dispatcher.BeginInvoke(() =>
-            {
-                var wa = SystemParameters.WorkArea;
-                Left = wa.Left; Top = wa.Top;
-                Width = wa.Width; Height = wa.Height;
-                WindowState = WindowState.Normal;
-            });
+            _isManuallyMaximized = false;
+            MaxBtn.Content = "☐";
         }
     }
 
-    // ── Tab switching ─────────────────────────────────────────────────────────
-
-    private void TabPatches_Click(object sender, RoutedEventArgs e)
-    {
-        PanelPatches.Visibility = Visibility.Visible;
-        PanelChunks.Visibility  = Visibility.Collapsed;
-        HighlightTab(TabPatches);
-    }
-
-    private void TabChunks_Click(object sender, RoutedEventArgs e)
-    {
-        PanelPatches.Visibility = Visibility.Collapsed;
-        PanelChunks.Visibility  = Visibility.Visible;
-        HighlightTab(TabChunks);
-    }
-
-    private void HighlightTab(System.Windows.Controls.Button active)
-    {
-        var accent = (Brush)Application.Current.Resources["AccentButtonBg"];
-        var none   = Brushes.Transparent;
-        TabPatches.BorderBrush = active == TabPatches ? accent : none;
-        TabChunks.BorderBrush  = active == TabChunks  ? accent : none;
-        TabPatches.BorderThickness = new Thickness(0, 0, 0, active == TabPatches ? 2 : 0);
-        TabChunks.BorderThickness  = new Thickness(0, 0, 0, active == TabChunks  ? 2 : 0);
-    }
 
     // ── Data loading ──────────────────────────────────────────────────────────
 
     private async Task LoadAsync()
     {
-        FileDetails? file = null;
         try
         {
-            file = await _client.Files.GetAsync(_fileId);
+            var file = await _client.Files.GetAsync(_fileId);
+            if (file is null)
+            {
+                SidebarLoading.Text = "File not found.";
+                return;
+            }
+            PopulateSidebar(file);
+            await LoadPatchesAsync(file);
         }
         catch (Exception ex)
         {
-            SidebarLoading.Text = $"Error loading file: {ex.Message}";
-            return;
+            AppLogger.Error($"FileDetail load failed for {_fileId}", ex);
+            SidebarLoading.Text = $"Error: {ex.Message}";
         }
-
-        PopulateSidebar(file);
-        await LoadPatchesAsync(file);
-        PopulateChunks(file);
     }
 
     private void PopulateSidebar(FileDetails f)
     {
+        _loadedFile = f;
         TitleText.Text = f.FileName;
 
         InfoFileName.Text   = f.FileName;
@@ -155,12 +155,12 @@ public partial class FileDetailWindow : Window
                 PatchesStatus.Text = "No patches found for this file.";
                 return;
             }
-            PatchesGrid.ItemsSource = page.Items.Select(p => new
+            PatchesGrid.ItemsSource = page.Items.Select(p => new PatchRow
             {
+                PatchId     = p.PatchId,
                 Description = p.Description ?? "(no description)",
                 Version     = p.Version ?? "—",
                 SizeKb      = $"{p.FileSize / 1024.0:N1}",
-                p.IsActive,
                 Created     = p.CreatedAt.ToString("dd MMM yyyy"),
             }).ToList();
             PatchesStatus.Text = $"{page.Total} patch(es)";
@@ -171,18 +171,262 @@ public partial class FileDetailWindow : Window
         }
     }
 
-    private void PopulateChunks(FileDetails f)
+    // ── Patch actions: Delete / Rename / Replace ──────────────────────────────
+
+    private async void DeletePatch_Click(object sender, RoutedEventArgs e)
     {
-        if (f.ChunkHashes is { Count: > 0 })
+        if (sender is not Button btn || btn.Tag is not Guid patchId) return;
+
+        var confirm = MessageBox.Show(
+            "Permanently delete this patch?",
+            "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
         {
-            ChunksHeader.Text      = $"{f.ChunkHashes.Count} DNA blocks";
-            ChunksList.ItemsSource = f.ChunkHashes
-                .Select((h, i) => $"{i,5}  {h}")
-                .ToList();
+            await _client.Patches.DeleteAsync(patchId);
+            if (_loadedFile is not null) await LoadPatchesAsync(_loadedFile);
+            PatchesStatus.Text = "Patch deleted.";
         }
-        else
+        catch (Exception ex)
         {
-            ChunksHeader.Text = "DNA not available — file may not have been indexed yet.";
+            AppLogger.Error($"Delete patch {patchId} failed", ex);
+            PatchesStatus.Text = "Delete failed — check the log.";
         }
     }
+
+    private async void RenamePatch_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not Guid patchId) return;
+
+        var dlg = new RenameDialog { Owner = this };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            await _client.Patches.UpdateAsync(patchId, dlg.NewDescription, dlg.NewVersion);
+            if (_loadedFile is not null) await LoadPatchesAsync(_loadedFile);
+            PatchesStatus.Text = "Patch renamed.";
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Rename patch {patchId} failed", ex);
+            PatchesStatus.Text = "Rename failed — check the log.";
+        }
+    }
+
+    private async void ReplacePatch_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not Guid patchId) return;
+        if (_loadedFile is null) return;
+
+        var dlg = new OpenFileDialog
+        {
+            Title  = "Select replacement ECU file",
+            Filter = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        PatchesStatus.Text = "Uploading replacement…";
+        try
+        {
+            // Upload new binary against same parent, then remove the old patch
+            await _client.Patches.UploadAsync(dlg.FileName, _loadedFile.FileId);
+            await _client.Patches.DeleteAsync(patchId);
+            await LoadPatchesAsync(_loadedFile);
+            PatchesStatus.Text = "Patch replaced.";
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Replace patch {patchId} failed", ex);
+            PatchesStatus.Text = "Replace failed — check the log.";
+        }
+    }
+
+    // ── Generate ──────────────────────────────────────────────────────────────
+
+    private void GenerateSource_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+            ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void GenerateSource_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+        if (files.Length > 0) GenerateSourcePath.Text = files[0];
+    }
+
+    private void BrowseGenerateSource_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title  = "Select source ECU file",
+            Filter = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
+        };
+        if (dlg.ShowDialog() == true)
+            GenerateSourcePath.Text = dlg.FileName;
+    }
+
+    private async void Generate_Click(object sender, RoutedEventArgs e)
+    {
+        var sourcePath = GenerateSourcePath.Text.Trim();
+        var placeholder = "Drop source ECU file here or Browse…";
+        bool usingOriginal = false;
+        string? tempFile = null;
+
+        if (string.IsNullOrEmpty(sourcePath) || sourcePath == placeholder || !File.Exists(sourcePath))
+        {
+            if (_loadedFile is null)
+            {
+                GenerateStatus.Text = "Please select the source ECU file first.";
+                return;
+            }
+            usingOriginal = true;
+        }
+
+        var selectedRows = (PatchesGrid.ItemsSource as IEnumerable<PatchRow>)?
+            .Where(r => r.IsSelected).ToList() ?? [];
+
+        var selected = selectedRows.Select(r => r.PatchId).ToList();
+
+        if (selected.Count == 0)
+        {
+            GenerateStatus.Text = "Tick at least one patch before generating.";
+            return;
+        }
+
+        var suggestedName = BuildOutputFileName(selectedRows.Select(r => r.Description), sourcePath, usingOriginal);
+
+        var saveDlg = new SaveFileDialog
+        {
+            Title            = "Save generated file",
+            Filter           = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
+            FileName         = suggestedName,
+            InitialDirectory = usingOriginal ? "" : System.IO.Path.GetDirectoryName(sourcePath) ?? "",
+        };
+        if (saveDlg.ShowDialog() != true) return;
+
+        GenerateStatus.Text = usingOriginal
+            ? $"Downloading original file, then applying {selected.Count} patch(es)…"
+            : $"Applying {selected.Count} patch(es)…";
+        try
+        {
+            if (usingOriginal)
+            {
+                var bytes = await _client.Files.DownloadAsync(_loadedFile!.FileId);
+                tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                    $"cta_{_loadedFile.FileId:N}.bin");
+                await File.WriteAllBytesAsync(tempFile, bytes);
+                sourcePath = tempFile;
+                GenerateStatus.Text = $"Applying {selected.Count} patch(es) to original…";
+            }
+
+            var result = await _client.Patches.ProcessAsync(sourcePath, selected);
+            await File.WriteAllBytesAsync(saveDlg.FileName, result);
+            GenerateStatus.Text = $"Done — saved to {System.IO.Path.GetFileName(saveDlg.FileName)}";
+            AppLogger.Info($"Generated {saveDlg.FileName} using {selected.Count} patch(es)");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Generate failed", ex);
+            GenerateStatus.Text = "Generate failed — check the log.";
+        }
+        finally
+        {
+            if (tempFile is not null && File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    private static string BuildOutputFileName(
+        IEnumerable<string> descriptions, string sourcePath, bool usingOriginal)
+    {
+        var invalidChars = System.IO.Path.GetInvalidFileNameChars();
+        var descList = descriptions.ToList();
+
+        if (descList.Count > 0)
+        {
+            var parts = descList.Select(description =>
+            {
+                // Remove "ori"/"original" (whole word, case-insensitive)
+                var desc = System.Text.RegularExpressions.Regex.Replace(
+                    description, @"\b(ori(ginal)?)\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                // Remove any remaining invalid filename chars and collapse whitespace
+                desc = new string(desc.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
+                desc = System.Text.RegularExpressions.Regex.Replace(desc.Trim(), @"\s+", "_");
+                return desc;
+            }).Where(s => s.Length > 0);
+
+            var combined = string.Join("_", parts);
+            if (combined.Length > 0)
+                return combined + ".bin";
+        }
+
+        return System.IO.Path.GetFileNameWithoutExtension(sourcePath) + "_generated.bin";
+    }
+
+    // ── Patch upload ──────────────────────────────────────────────────────────
+
+    private FileDetails? _loadedFile;
+
+    private void PatchZone_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+            ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void PatchZone_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+        if (files.Length > 0) PatchFilePath.Text = files[0];
+    }
+
+    private void BrowsePatch_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title  = "Select modified ECU file",
+            Filter = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
+        };
+        if (dlg.ShowDialog() == true)
+            PatchFilePath.Text = dlg.FileName;
+    }
+
+    private async void UploadPatch_Click(object sender, RoutedEventArgs e)
+    {
+        var path = PatchFilePath.Text.Trim();
+        if (string.IsNullOrEmpty(path) || path == "No file selected" || !File.Exists(path))
+        {
+            PatchUploadStatus.Text = "Please select the modified ECU file first.";
+            return;
+        }
+
+        PatchUploadStatus.Text = "Uploading patch…";
+        try
+        {
+            var desc    = NullIfEmpty(PatchDescription.Text == "Description (optional)" ? null : PatchDescription.Text);
+            var version = NullIfEmpty(PatchVersion.Text == "v1.0" ? "v1.0" : PatchVersion.Text);
+
+            var result = await _client.Patches.UploadAsync(path, _fileId, desc, version);
+            AppLogger.Info($"Patch uploaded: {result.PatchId} for file {_fileId}");
+            PatchUploadStatus.Text = $"Patch uploaded successfully! ID: {result.PatchId}";
+            PatchFilePath.Text     = "No file selected";
+
+            // Refresh patch list
+            if (_loadedFile is not null) await LoadPatchesAsync(_loadedFile);
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Patch upload failed for file {_fileId}", ex);
+            PatchUploadStatus.Text = "Patch upload failed. Check the log for details.";
+        }
+    }
+
+    private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
 }
+

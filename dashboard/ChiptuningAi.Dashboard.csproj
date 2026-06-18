@@ -4,6 +4,10 @@
     <ProjectReference Include="..\src\ChiptuningAi.Client\ChiptuningAi.Client.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Fonts\Jura-VariableFont_wght.ttf" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>

@@ -9,7 +9,10 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        AppLogger.Info($"--- Dashboard started (v{GetType().Assembly.GetName().Version}) ---");
+
         ThemeManager.Apply();
+        LanguageManager.Apply();
 
         var session = SessionStore.Load();
         if (session is { AccessToken: { Length: > 0 } } s)
@@ -17,10 +20,11 @@ public partial class App : Application
             try
             {
                 var client = ChiptuningAiClient.FromToken(s.AccessToken, s.RefreshToken, s.ApiUrl);
-                new MainWindow(client).Show();
+                AppLogger.Info("Restored session from store");
+                new MainWindow(client, s.ApiUrl, s.Email).Show();
                 return;
             }
-            catch { }
+            catch (Exception ex) { AppLogger.Error("Failed to restore session", ex); }
         }
 
         new LoginWindow().Show();

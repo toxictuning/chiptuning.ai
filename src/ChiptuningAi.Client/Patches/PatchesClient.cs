@@ -105,9 +105,61 @@ public sealed class PatchesClient
         => _client.GetAsync<PagedResult<PatchHistoryEntry>>(
             $"/api/patches/{fileId}/history?skip={skip}&take={take}", cancellationToken);
 
+    /// <summary>Updates the description and/or version label of an existing patch.</summary>
+    /// <param name="patchId">The patch identifier to update.</param>
+    /// <param name="description">New description, or null to clear.</param>
+    /// <param name="version">New version label, or null to clear.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task UpdateAsync(
+        Guid patchId,
+        string? description,
+        string? version,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new { description, version };
+        return _client.PatchAsync($"/api/patches/{patchId}", body, cancellationToken);
+    }
+
     /// <summary>Permanently deletes a patch.</summary>
     /// <param name="patchId">The patch identifier to delete.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public Task DeleteAsync(Guid patchId, CancellationToken cancellationToken = default)
         => _client.DeleteAsync($"/api/patches/{patchId}", cancellationToken);
+
+    /// <summary>
+    /// Applies multiple patches to a raw ECU file and returns the processed binary.
+    /// Patches may come from different parent files; they are applied in the order given.
+    /// The file is not stored — the result is streamed back directly.
+    /// </summary>
+    /// <param name="filePath">Path to the raw ECU binary to process.</param>
+    /// <param name="patchIds">Ordered list of patch IDs to apply (sort by similarity before calling).</param>
+    /// <param name="bypassIntegrity">Skip the integrity check against the base file.</param>
+    /// <param name="bypassReason">Optional reason logged server-side when bypassing.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Processed binary bytes.</returns>
+    public async Task<byte[]> ProcessAsync(
+        string filePath,
+        IReadOnlyList<Guid> patchIds,
+        bool bypassIntegrity = false,
+        string? bypassReason = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("ECU file not found.", filePath);
+
+        using var form = new MultipartFormDataContent();
+
+        var fileContent = new StreamContent(File.OpenRead(filePath));
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        form.Add(fileContent, "file", Path.GetFileName(filePath));
+
+        var idsJson = System.Text.Json.JsonSerializer.Serialize(patchIds);
+        form.Add(new StringContent(idsJson), "patchIds");
+        form.Add(new StringContent(bypassIntegrity ? "true" : "false"), "bypassIntegrity");
+        if (bypassReason is not null)
+            form.Add(new StringContent(bypassReason), "bypassReason");
+
+        return await _client.PostFormBinaryAsync("/api/patches/process", form, cancellationToken);
+    }
 }
