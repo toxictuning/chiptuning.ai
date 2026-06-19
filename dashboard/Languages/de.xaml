@@ -1,8 +1,8 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="Nav.DropZone">Ablagebereich</sys:String>
-    <sys:String x:Key="Nav.Files">Dateien</sys:String>
+    <sys:String x:Key="Nav.Files">Meine Dateien</sys:String>
     <sys:String x:Key="Nav.Upload">Hochladen</sys:String>
     <sys:String x:Key="Nav.Profile">Profil</sys:String>
     <sys:String x:Key="Nav.Logout">Abmelden</sys:String>
@@ -43,7 +43,7 @@
     <sys:String x:Key="Upload.Torque">Drehmoment (Nm)</sys:String>
     <sys:String x:Key="Upload.Button">Datei hochladen</sys:String>
     <sys:String x:Key="Upload.Optional">Optional</sys:String>
-    <sys:String x:Key="Files.Title">Dateien</sys:String>
+    <sys:String x:Key="Files.Title">Meine Dateien</sys:String>
     <sys:String x:Key="Profile.Title">Profil</sys:String>
     <sys:String x:Key="Proc.SelectPatches">PATCHES AUSWÃ„HLEN — wÃ¤hlen Sie aus den Quelldateien unten</sys:String>
     <sys:String x:Key="Proc.SelectedPatches">AUSGEWÃ„HLTE PATCHES</sys:String>

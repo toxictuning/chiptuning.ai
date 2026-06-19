@@ -288,7 +288,7 @@ public partial class MainWindow : Window
         PanelProfile.Visibility  = name == "Profile"  ? Visibility.Visible : Visibility.Collapsed;
 
         if (name == "Upload")  ResetUploadForm();
-        if (name == "Files" && !_filesLoaded) _ = LoadFilesAsync();
+        if (name == "Files") _ = LoadFilesAsync();
         if (name == "Profile") _ = LoadProfileAsync();
     }
 
@@ -617,7 +617,7 @@ public partial class MainWindow : Window
         var name = row?.FileName ?? fileId.ToString();
 
         var confirm = MessageBox.Show(
-            $"Delete '{name}'?\n\nAll associated patches will also be removed.",
+            $"Delete '{name}'?\n\nAll associated solutions will also be removed.",
             "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
@@ -657,7 +657,8 @@ public partial class MainWindow : Window
             var data = await _client.Files.DownloadAsync(fileId);
             await File.WriteAllBytesAsync(saveDlg.FileName, data);
             AppLogger.Info($"Downloaded file {fileId} to {saveDlg.FileName}");
-            ShowToast($"Saved — {Path.GetFileName(saveDlg.FileName)}", "✓");
+            var dlFolder = Path.GetDirectoryName(saveDlg.FileName);
+            new SuccessDialog($"File downloaded!\n{Path.GetFileName(saveDlg.FileName)}", dlFolder) { Owner = this }.Show();
         }
         catch (Exception ex)
         {

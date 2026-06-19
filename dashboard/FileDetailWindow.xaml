@@ -258,7 +258,7 @@
                                 BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0"
                                 Padding="0,10,0,0">
                             <StackPanel>
-                                <TextBlock Text="GENERATE — apply selected patches to a source file"
+                                <TextBlock Text="GENERATE — apply selected solutions to a source file"
                                            FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
                                 <Grid>
@@ -274,7 +274,7 @@
                                              AllowDrop="True"
                                              Drop="GenerateSource_Drop"
                                              DragOver="GenerateSource_DragOver"
-                                             ToolTip="Source ECU file to apply the selected patches to"/>
+                                             ToolTip="Source ECU file to apply the selected solutions to"/>
                                     <Button Grid.Column="1" Content="Browse…"
                                             Style="{StaticResource GhostButton}"
                                             Margin="0,0,6,0" Padding="8,6"
@@ -283,7 +283,7 @@
                                     <Button Grid.Column="2" Content="Generate"
                                             Style="{StaticResource AccentButton}"
                                             Padding="14,6"
-                                            ToolTip="Apply selected patches to the source file and save result"
+                                            ToolTip="Apply selected solutions to the source file and save result"
                                             Click="Generate_Click"/>
                                 </Grid>
                                 <TextBlock x:Name="GenerateStatus"
@@ -297,7 +297,7 @@
                                 BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0"
                                 Padding="0,12,0,0">
                             <StackPanel>
-                                <TextBlock Text="UPLOAD PATCH" FontSize="10" FontWeight="SemiBold"
+                                <TextBlock Text="UPLOAD SOLUTION" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -324,16 +324,16 @@
                                              Style="{StaticResource DarkTextBox}"
                                              Margin="0,0,6,0"
                                              Text="Description"
-                                             ToolTip="Short description of this patch (e.g. Stage 1 +30hp)"/>
+                                             ToolTip="Short description of this solution (e.g. Stage 1 +30hp)"/>
                                     <TextBox x:Name="PatchVersion" Grid.Column="3"
                                              Style="{StaticResource DarkTextBox}"
                                              Margin="0,0,6,0"
                                              Text="v1.0"
-                                             ToolTip="Version label for this patch"/>
+                                             ToolTip="Version label for this solution"/>
                                     <Button Grid.Column="4" Content="Upload"
                                             Style="{StaticResource AccentButton}"
                                             Padding="14,6"
-                                            ToolTip="Upload the modified ECU file as a patch for this record"
+                                            ToolTip="Upload the modified ECU file as a solution for this record"
                                             Click="UploadPatch_Click"/>
                                 </Grid>
                             </StackPanel>

@@ -1,8 +1,8 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="Nav.DropZone">文件拖放区</sys:String>
-    <sys:String x:Key="Nav.Files">文件</sys:String>
+    <sys:String x:Key="Nav.Files">我的文件</sys:String>
     <sys:String x:Key="Nav.Upload">上传</sys:String>
     <sys:String x:Key="Nav.Profile">个人资料</sys:String>
     <sys:String x:Key="Nav.Logout">退出登录</sys:String>

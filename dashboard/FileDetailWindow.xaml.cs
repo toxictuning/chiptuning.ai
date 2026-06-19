@@ -145,14 +145,14 @@ public partial class FileDetailWindow : Window
 
     private async Task LoadPatchesAsync(FileDetails f)
     {
-        PatchesStatus.Text = "Loading patches…";
+        PatchesStatus.Text = "Loading solutions…";
         PatchesGrid.ItemsSource = null;
         try
         {
             var page = await _client.Patches.ListAsync(f.FileId, take: 100);
             if (page.Items.Count == 0)
             {
-                PatchesStatus.Text = "No patches found for this file.";
+                PatchesStatus.Text = "No solutions found for this file.";
                 return;
             }
             PatchesGrid.ItemsSource = page.Items.Select(p => new PatchRow
@@ -163,7 +163,7 @@ public partial class FileDetailWindow : Window
                 SizeKb      = $"{p.FileSize / 1024.0:N1}",
                 Created     = p.CreatedAt.ToString("dd MMM yyyy"),
             }).ToList();
-            PatchesStatus.Text = $"{page.Total} patch(es)";
+            PatchesStatus.Text = $"{page.Total} solution(s)";
         }
         catch (Exception ex)
         {
@@ -178,7 +178,7 @@ public partial class FileDetailWindow : Window
         if (sender is not Button btn || btn.Tag is not Guid patchId) return;
 
         var confirm = MessageBox.Show(
-            "Permanently delete this patch?",
+            "Permanently delete this solution?",
             "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return;
 
@@ -186,7 +186,7 @@ public partial class FileDetailWindow : Window
         {
             await _client.Patches.DeleteAsync(patchId);
             if (_loadedFile is not null) await LoadPatchesAsync(_loadedFile);
-            PatchesStatus.Text = "Patch deleted.";
+            PatchesStatus.Text = "Solution deleted.";
         }
         catch (Exception ex)
         {
@@ -206,7 +206,7 @@ public partial class FileDetailWindow : Window
         {
             await _client.Patches.UpdateAsync(patchId, dlg.NewDescription, dlg.NewVersion);
             if (_loadedFile is not null) await LoadPatchesAsync(_loadedFile);
-            PatchesStatus.Text = "Patch renamed.";
+            PatchesStatus.Text = "Solution renamed.";
         }
         catch (Exception ex)
         {
@@ -234,7 +234,7 @@ public partial class FileDetailWindow : Window
             await _client.Patches.UploadAsync(dlg.FileName, _loadedFile.FileId);
             await _client.Patches.DeleteAsync(patchId);
             await LoadPatchesAsync(_loadedFile);
-            PatchesStatus.Text = "Patch replaced.";
+            PatchesStatus.Text = "Solution replaced.";
         }
         catch (Exception ex)
         {
@@ -311,8 +311,8 @@ public partial class FileDetailWindow : Window
         if (saveDlg.ShowDialog() != true) return;
 
         GenerateStatus.Text = usingOriginal
-            ? $"Downloading original file, then applying {selected.Count} patch(es)…"
-            : $"Applying {selected.Count} patch(es)…";
+            ? $"Downloading original file, then applying {selected.Count} solution(s)…"
+            : $"Applying {selected.Count} solution(s)…";
         try
         {
             if (usingOriginal)
@@ -322,13 +322,15 @@ public partial class FileDetailWindow : Window
                     $"cta_{_loadedFile.FileId:N}.bin");
                 await File.WriteAllBytesAsync(tempFile, bytes);
                 sourcePath = tempFile;
-                GenerateStatus.Text = $"Applying {selected.Count} patch(es) to original…";
+                GenerateStatus.Text = $"Applying {selected.Count} solution(s) to original…";
             }
 
             var result = await _client.Patches.ProcessAsync(sourcePath, selected);
             await File.WriteAllBytesAsync(saveDlg.FileName, result);
-            GenerateStatus.Text = $"Done — saved to {System.IO.Path.GetFileName(saveDlg.FileName)}";
-            AppLogger.Info($"Generated {saveDlg.FileName} using {selected.Count} patch(es)");
+            GenerateStatus.Text = string.Empty;
+            AppLogger.Info($"Generated {saveDlg.FileName} using {selected.Count} solution(s)");
+            var genFolder = System.IO.Path.GetDirectoryName(saveDlg.FileName);
+            new SuccessDialog($"File generated!\n{System.IO.Path.GetFileName(saveDlg.FileName)}", genFolder) { Owner = this }.Show();
         }
         catch (Exception ex)
         {
@@ -465,7 +467,9 @@ public partial class FileDetailWindow : Window
             var data = await _client.Files.DownloadAsync(_loadedFile.FileId);
             await File.WriteAllBytesAsync(saveDlg.FileName, data);
             AppLogger.Info($"Downloaded original file {_fileId} to {saveDlg.FileName}");
-            PatchesStatus.Text = $"Saved — {System.IO.Path.GetFileName(saveDlg.FileName)}";
+            PatchesStatus.Text = string.Empty;
+            var dlFolder = System.IO.Path.GetDirectoryName(saveDlg.FileName);
+            new SuccessDialog($"Original file saved!\n{System.IO.Path.GetFileName(saveDlg.FileName)}", dlFolder) { Owner = this }.Show();
         }
         catch (Exception ex)
         {

@@ -38,6 +38,16 @@
                        TextWrapping="Wrap"
                        Margin="0,0,0,20"/>
 
+            <!-- Open Folder button (shown only when a folder path is provided) -->
+            <Button x:Name="OpenFolderBtn"
+                    Content="Open Folder"
+                    Style="{StaticResource AccentButton}"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Left"
+                    Padding="14,8"
+                    Margin="0,0,0,16"
+                    Click="OpenFolder_Click"/>
+
             <!-- Countdown bar -->
             <ProgressBar x:Name="CountdownBar"
                          Height="4" Maximum="1" Value="1"

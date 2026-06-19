@@ -7,13 +7,24 @@ public partial class SuccessDialog : Window
 {
     private DispatcherTimer? _timer;
     private int _remaining = 5;
+    private string? _folderPath;
 
-    public SuccessDialog(string message)
+    public SuccessDialog(string message, string? folderPath = null)
     {
         InitializeComponent();
-        MessageText.Text    = message;
-        CountdownText.Text  = "Closing in 5s";
+        MessageText.Text   = message;
+        CountdownText.Text = "Closing in 5s";
+        _folderPath        = folderPath;
+        if (folderPath is not null)
+            OpenFolderBtn.Visibility = Visibility.Visible;
         Loaded += (_, _) => StartCountdown();
+    }
+
+    private void OpenFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (_folderPath is null) return;
+        try { System.Diagnostics.Process.Start("explorer.exe", $"\"{_folderPath}\""); }
+        catch { }
     }
 
     private void StartCountdown()

@@ -1,8 +1,8 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="Nav.DropZone">Zone de depot</sys:String>
-    <sys:String x:Key="Nav.Files">Fichiers</sys:String>
+    <sys:String x:Key="Nav.Files">Mes Fichiers</sys:String>
     <sys:String x:Key="Nav.Upload">Televerser</sys:String>
     <sys:String x:Key="Nav.Profile">Profil</sys:String>
     <sys:String x:Key="Nav.Logout">Deconnexion</sys:String>
@@ -43,7 +43,7 @@
     <sys:String x:Key="Upload.Torque">Couple (Nm)</sys:String>
     <sys:String x:Key="Upload.Button">TÃ©lÃ©verser</sys:String>
     <sys:String x:Key="Upload.Optional">Optionnel</sys:String>
-    <sys:String x:Key="Files.Title">Fichiers</sys:String>
+    <sys:String x:Key="Files.Title">Mes Fichiers</sys:String>
     <sys:String x:Key="Profile.Title">Profil</sys:String>
     <sys:String x:Key="Proc.SelectPatches">SÃ‰LECTIONNER LES CORRECTIFS — choisissez parmi les fichiers parents ci-dessous</sys:String>
     <sys:String x:Key="Proc.SelectedPatches">CORRECTIFS SÃ‰LECTIONNÃ‰S</sys:String>

@@ -1,8 +1,8 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="Nav.DropZone">Neerzetzone</sys:String>
-    <sys:String x:Key="Nav.Files">Bestanden</sys:String>
+    <sys:String x:Key="Nav.Files">Mijn Bestanden</sys:String>
     <sys:String x:Key="Nav.Upload">Uploaden</sys:String>
     <sys:String x:Key="Nav.Profile">Profiel</sys:String>
     <sys:String x:Key="Nav.Logout">Uitloggen</sys:String>
@@ -43,7 +43,7 @@
     <sys:String x:Key="Upload.Torque">Koppel (Nm)</sys:String>
     <sys:String x:Key="Upload.Button">Bestand uploaden</sys:String>
     <sys:String x:Key="Upload.Optional">Optioneel</sys:String>
-    <sys:String x:Key="Files.Title">Bestanden</sys:String>
+    <sys:String x:Key="Files.Title">Mijn Bestanden</sys:String>
     <sys:String x:Key="Profile.Title">Profiel</sys:String>
     <sys:String x:Key="Proc.SelectPatches">PATCHES SELECTEREN — kies uit onderstaande bovenliggende bestanden</sys:String>
     <sys:String x:Key="Proc.SelectedPatches">GESELECTEERDE PATCHES</sys:String>

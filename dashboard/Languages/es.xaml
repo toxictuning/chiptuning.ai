@@ -1,8 +1,8 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="Nav.DropZone">Zona de descarga</sys:String>
-    <sys:String x:Key="Nav.Files">Archivos</sys:String>
+    <sys:String x:Key="Nav.Files">Mis Archivos</sys:String>
     <sys:String x:Key="Nav.Upload">Subir</sys:String>
     <sys:String x:Key="Nav.Profile">Perfil</sys:String>
     <sys:String x:Key="Nav.Logout">Cerrar sesion</sys:String>
@@ -43,7 +43,7 @@
     <sys:String x:Key="Upload.Torque">Torque (Nm)</sys:String>
     <sys:String x:Key="Upload.Button">Subir archivo</sys:String>
     <sys:String x:Key="Upload.Optional">Opcional</sys:String>
-    <sys:String x:Key="Files.Title">Archivos</sys:String>
+    <sys:String x:Key="Files.Title">Mis Archivos</sys:String>
     <sys:String x:Key="Profile.Title">Perfil</sys:String>
     <sys:String x:Key="Proc.SelectPatches">SELECCIONAR PARCHES — elija entre los archivos principales</sys:String>
     <sys:String x:Key="Proc.SelectedPatches">PARCHES SELECCIONADOS</sys:String>

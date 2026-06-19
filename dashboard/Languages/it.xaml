@@ -1,8 +1,8 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="Nav.DropZone">Area di rilascio</sys:String>
-    <sys:String x:Key="Nav.Files">File</sys:String>
+    <sys:String x:Key="Nav.Files">I Miei File</sys:String>
     <sys:String x:Key="Nav.Upload">Carica</sys:String>
     <sys:String x:Key="Nav.Profile">Profilo</sys:String>
     <sys:String x:Key="Nav.Logout">Esci</sys:String>
@@ -43,7 +43,7 @@
     <sys:String x:Key="Upload.Torque">Coppia (Nm)</sys:String>
     <sys:String x:Key="Upload.Button">Carica file</sys:String>
     <sys:String x:Key="Upload.Optional">Opzionale</sys:String>
-    <sys:String x:Key="Files.Title">File</sys:String>
+    <sys:String x:Key="Files.Title">I Miei File</sys:String>
     <sys:String x:Key="Profile.Title">Profilo</sys:String>
     <sys:String x:Key="Proc.SelectPatches">SELEZIONA PATCH — scegli dai file padre qui sotto</sys:String>
     <sys:String x:Key="Proc.SelectedPatches">PATCH SELEZIONATE</sys:String>
