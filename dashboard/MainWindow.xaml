@@ -428,7 +428,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,0,12">
                                     <Label Content="Variant *"/>
-                                    <ComboBox x:Name="MdVehicleVariant" Style="{StaticResource DarkComboBox}" IsEditable="True"
+                                    <ComboBox x:Name="MdVehicleVariant" Style="{StaticResource DarkComboBox}"
                                               ToolTip="Vehicle variant / trim — auto-filtered by model"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,12,12">
