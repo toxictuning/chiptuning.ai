@@ -381,7 +381,9 @@
                                   VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock Text="Upload File" FontSize="20" FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20"/>
+                                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
+                            <Border Background="{DynamicResource BgPanel}" Padding="24" Margin="0,0,0,0">
+                            <StackPanel>
 
                             <Label Content="ECU File"/>
                             <Grid Margin="0,0,0,16">
@@ -497,6 +499,8 @@
                                     HorizontalAlignment="Left" Height="40" Width="140"
                                     ToolTip="Upload the ECU file with the metadata above"
                                     Click="UploadFile_Click"/>
+                            </StackPanel>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
 

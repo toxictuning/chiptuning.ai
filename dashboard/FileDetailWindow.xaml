@@ -223,8 +223,9 @@
                     </ScrollViewer>
                 </Border>
 
-                <!-- Right content: tabs for patches and chunk hashes -->
-                <Grid Grid.Column="1" Margin="0">
+                <!-- Right content: patches panel -->
+                <Border Grid.Column="1" Background="{DynamicResource BgPanel}">
+                <Grid Margin="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -386,6 +387,7 @@
                                    FontSize="11" Margin="0,6,0,0"/>
                     </Grid>
                 </Grid>
+                </Border>
             </Grid>
         </Grid>
     </Border>
