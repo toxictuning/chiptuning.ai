@@ -12,6 +12,9 @@ obj/
 *.nupkg
 packages/
 
+# ECU binary files — never commit raw firmware
+*.bin
+
 # Secrets
 *.pfx
 *.key
