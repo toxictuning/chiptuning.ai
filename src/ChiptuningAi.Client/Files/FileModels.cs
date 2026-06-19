@@ -171,6 +171,9 @@ public sealed class FileDetails
 
     /// <summary>MD5 chunk hashes used for similarity matching (populated on detail fetch only).</summary>
     public IReadOnlyList<string>? ChunkHashes { get; init; }
+
+    /// <summary>True when the authenticated caller owns this file.</summary>
+    public bool IsOwner { get; init; }
 }
 
 /// <summary>Editable metadata fields for an existing file.</summary>

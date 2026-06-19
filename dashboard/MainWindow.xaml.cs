@@ -29,6 +29,7 @@ public partial class MainWindow : Window
     private readonly ChiptuningAiClient _client;
     private string _apiUrl = string.Empty;
     private string _email  = string.Empty;
+    private Guid _currentUserId;
     private string? _droppedFilePath;
     private IReadOnlyList<SimilarFile> _currentSimilarFiles = [];
 
@@ -523,7 +524,7 @@ public partial class MainWindow : Window
         var best     = _currentSimilarFiles[0];
         PanelMatchDialog.Visibility = Visibility.Collapsed;
         ResetDropZone();
-        var win = new FileDetailWindow(_client, best.FileId, best.FileName, sourceFilePath: filePath);
+        var win = new FileDetailWindow(_client, best.FileId, best.FileName, sourceFilePath: filePath, currentUserId: _currentUserId);
         win.Owner = this;
         win.Closed += (_, _) => Activate();
         win.Show();
@@ -531,7 +532,7 @@ public partial class MainWindow : Window
 
     private void OpenFileDetail(Guid fileId, string fileName)
     {
-        var win = new FileDetailWindow(_client, fileId, fileName);
+        var win = new FileDetailWindow(_client, fileId, fileName, currentUserId: _currentUserId);
         win.Owner = this;
         win.Closed += (_, _) => Activate();
         win.Show();
@@ -551,6 +552,7 @@ public partial class MainWindow : Window
         {
             var p = await _client.Auth.GetProfileAsync();
             _email = p.Email;
+            _currentUserId = p.Id;
             ProfileLabel.Text = p.Email;
             ProfEmail.Text    = p.Email;
             ProfTier.Text     = $"Plan: {p.Tier}";

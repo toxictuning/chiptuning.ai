@@ -114,11 +114,13 @@
 
                                 <Separator Background="{DynamicResource Border}" Margin="0,14,0,12"/>
 
-                                <Button Content="Edit Metadata"
+                                <Button x:Name="EditMetadataBtn"
+                                        Content="Edit Metadata"
                                         Style="{StaticResource GhostButton}"
                                         HorizontalAlignment="Stretch"
                                         Click="EditMetadata_Click"/>
-                                <Button Content="Download Original"
+                                <Button x:Name="DownloadOriginalBtn"
+                                        Content="Download Original"
                                         Style="{StaticResource GhostButton}"
                                         HorizontalAlignment="Stretch"
                                         Margin="0,4,0,0"
@@ -222,7 +224,7 @@
                                 <DataGridTextColumn Header="Version"     Binding="{Binding Version}"     Width="70"  IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Size (KB)"   Binding="{Binding SizeKb}"      Width="72"  IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Created"     Binding="{Binding Created}"     Width="106" IsReadOnly="True"/>
-                                <DataGridTemplateColumn Header="Actions" Width="160" CanUserSort="False">
+                                <DataGridTemplateColumn x:Name="PatchActionsColumn" Header="Actions" Width="160" CanUserSort="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" Margin="4,0">
@@ -293,7 +295,7 @@
                         </Border>
 
                         <!-- Patch upload strip -->
-                        <Border Grid.Row="3" Margin="0,10,0,0"
+                        <Border x:Name="UploadSolutionStrip" Grid.Row="3" Margin="0,10,0,0"
                                 BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0"
                                 Padding="0,12,0,0">
                             <StackPanel>

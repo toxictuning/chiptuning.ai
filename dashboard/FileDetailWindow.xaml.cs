@@ -34,13 +34,15 @@ public partial class FileDetailWindow : Window
     private readonly ChiptuningAiClient _client;
     private readonly Guid _fileId;
     private readonly string? _prefilledSourcePath;
+    private readonly Guid _currentUserId;
 
-    public FileDetailWindow(ChiptuningAiClient client, Guid fileId, string? displayName = null, string? sourceFilePath = null)
+    public FileDetailWindow(ChiptuningAiClient client, Guid fileId, string? displayName = null, string? sourceFilePath = null, Guid currentUserId = default)
     {
         InitializeComponent();
         _client = client;
         _fileId = fileId;
         _prefilledSourcePath = sourceFilePath;
+        _currentUserId = currentUserId;
         TitleText.Text = displayName ?? "File Detail";
         Loaded += async (_, _) =>
         {
@@ -141,6 +143,12 @@ public partial class FileDetailWindow : Window
 
         SidebarLoading.Visibility  = Visibility.Collapsed;
         SidebarContent.Visibility  = Visibility.Visible;
+
+        var ownerOnly = f.IsOwner ? Visibility.Visible : Visibility.Collapsed;
+        EditMetadataBtn.Visibility     = ownerOnly;
+        DownloadOriginalBtn.Visibility = ownerOnly;
+        UploadSolutionStrip.Visibility = ownerOnly;
+        PatchActionsColumn.Visibility  = f.IsOwner ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
     }
 
     private async Task LoadPatchesAsync(FileDetails f)
