@@ -306,7 +306,9 @@ public partial class FileDetailWindow : Window
             return;
         }
 
-        var prefix = _loadedFile is not null ? BuildFilePrefix(_loadedFile) : null;
+        var prefix = _prefilledSourcePath is not null
+            ? System.IO.Path.GetFileNameWithoutExtension(_prefilledSourcePath)
+            : _loadedFile is not null ? BuildFilePrefix(_loadedFile) : null;
         var suggestedName = BuildOutputFileName(selectedRows.Select(r => r.Description), sourcePath, usingOriginal, prefix);
 
         var saveDlg = new SaveFileDialog
