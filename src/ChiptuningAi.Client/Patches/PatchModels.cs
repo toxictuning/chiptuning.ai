@@ -67,12 +67,17 @@ public sealed class PatchHistoryEntry
 /// </summary>
 public sealed class PatchDetectionResult
 {
+    /// <summary>Unique identifier of the patch.</summary>
     public Guid     PatchId     { get; init; }
+    /// <summary>Human-readable description of the patch.</summary>
     public string?  Description { get; init; }
+    /// <summary>Version label of the patch.</summary>
     public string?  Version     { get; init; }
+    /// <summary>Size of the patch file in kilobytes.</summary>
     public double   SizeKb      { get; init; }
+    /// <summary>UTC timestamp when the patch was created.</summary>
     public DateTime CreatedAt   { get; init; }
-    /// <summary>"Applied", "NotApplied", or "Conflict"</summary>
+    /// <summary>"Applied" or "NotApplied".</summary>
     public string State { get; init; } = "NotApplied";
 }
 
@@ -81,7 +86,8 @@ public sealed class PatchDetectionResult
 /// </summary>
 public sealed class PatchClientAction
 {
+    /// <summary>Unique identifier of the patch to act on.</summary>
     public Guid   PatchId { get; init; }
-    /// <summary>"Apply", "Remove", or "Skip"</summary>
+    /// <summary>"Apply", "Remove", or "Skip".</summary>
     public string Action  { get; init; } = "Skip";
 }
