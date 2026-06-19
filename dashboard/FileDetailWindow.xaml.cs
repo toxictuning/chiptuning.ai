@@ -298,7 +298,8 @@ public partial class FileDetailWindow : Window
             return;
         }
 
-        var suggestedName = BuildOutputFileName(selectedRows.Select(r => r.Description), sourcePath, usingOriginal);
+        var prefix = _loadedFile is not null ? BuildFilePrefix(_loadedFile) : null;
+        var suggestedName = BuildOutputFileName(selectedRows.Select(r => r.Description), sourcePath, usingOriginal, prefix);
 
         var saveDlg = new SaveFileDialog
         {
@@ -341,31 +342,46 @@ public partial class FileDetailWindow : Window
         }
     }
 
+    private static string BuildFilePrefix(ChiptuningAi.Client.Files.FileDetails f)
+    {
+        var invalid = System.IO.Path.GetInvalidFileNameChars();
+        static string Clean(string s)
+        {
+            s = new string(s.Select(c => " /\\:*?\"<>|".Contains(c) ? '_' : c).ToArray()).Trim();
+            return System.Text.RegularExpressions.Regex.Replace(s, @"\s+", "_");
+        }
+        var parts = new[] { f.VehicleMake, f.VehicleModel, f.VehicleVariant, f.ECUMake, f.ECUModel, f.ReadHardware, f.ReadMode }
+            .Select(Clean).Where(s => s.Length > 0);
+        return string.Join("_", parts);
+    }
+
     private static string BuildOutputFileName(
-        IEnumerable<string> descriptions, string sourcePath, bool usingOriginal)
+        IEnumerable<string> descriptions, string sourcePath, bool usingOriginal, string? prefix = null)
     {
         var invalidChars = System.IO.Path.GetInvalidFileNameChars();
         var descList = descriptions.ToList();
+        string descPart = string.Empty;
 
         if (descList.Count > 0)
         {
             var parts = descList.Select(description =>
             {
-                // Remove "ori"/"original" (whole word, case-insensitive)
                 var desc = System.Text.RegularExpressions.Regex.Replace(
                     description, @"\b(ori(ginal)?)\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                // Remove any remaining invalid filename chars and collapse whitespace
                 desc = new string(desc.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
                 desc = System.Text.RegularExpressions.Regex.Replace(desc.Trim(), @"\s+", "_");
                 return desc;
             }).Where(s => s.Length > 0);
-
-            var combined = string.Join("_", parts);
-            if (combined.Length > 0)
-                return combined + ".bin";
+            descPart = string.Join("_", parts);
         }
 
-        return System.IO.Path.GetFileNameWithoutExtension(sourcePath) + "_generated.bin";
+        string baseName;
+        if (prefix is { Length: > 0 } p)
+            baseName = descPart.Length > 0 ? $"{p}_{descPart}" : p;
+        else
+            baseName = descPart.Length > 0 ? descPart : System.IO.Path.GetFileNameWithoutExtension(sourcePath) + "_generated";
+
+        return baseName + ".bin";
     }
 
     // ── Patch upload ──────────────────────────────────────────────────────────
@@ -414,10 +430,12 @@ public partial class FileDetailWindow : Window
 
             var result = await _client.Patches.UploadAsync(path, _fileId, desc, version);
             AppLogger.Info($"Patch uploaded: {result.PatchId} for file {_fileId}");
-            PatchUploadStatus.Text = $"Patch uploaded successfully! ID: {result.PatchId}";
+            PatchUploadStatus.Text = string.Empty;
             PatchFilePath.Text     = "No file selected";
 
-            // Refresh patch list
+            var successDlg = new SuccessDialog($"Patch uploaded successfully!\n{desc ?? System.IO.Path.GetFileName(path)}") { Owner = this };
+            successDlg.Show();
+
             if (_loadedFile is not null) await LoadPatchesAsync(_loadedFile);
         }
         catch (Exception ex)

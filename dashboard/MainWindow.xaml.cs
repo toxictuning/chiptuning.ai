@@ -634,6 +634,36 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void DownloadFile_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button btn || btn.Tag is not Guid fileId) return;
+
+        var row  = (FilesGrid.ItemsSource as IEnumerable<FileRow>)?.FirstOrDefault(r => r.FileId == fileId);
+        var name = row?.FileName ?? $"{fileId}.bin";
+
+        var saveDlg = new SaveFileDialog
+        {
+            Title            = "Save original ECU file",
+            Filter           = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
+            FileName         = name,
+        };
+        if (saveDlg.ShowDialog() != true) return;
+
+        ShowToast("Downloading…", "⬇");
+        try
+        {
+            var data = await _client.Files.DownloadAsync(fileId);
+            await File.WriteAllBytesAsync(saveDlg.FileName, data);
+            AppLogger.Info($"Downloaded file {fileId} to {saveDlg.FileName}");
+            ShowToast($"Saved — {Path.GetFileName(saveDlg.FileName)}", "✓");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Download file {fileId} failed", ex);
+            ShowToast($"Download failed: {ex.Message}", "✕");
+        }
+    }
+
     private void ViewLogs_Click(object sender, RoutedEventArgs e)
     {
         var path = AppLogger.LogPath;
@@ -708,22 +738,25 @@ public partial class MainWindow : Window
             var result = await _client.Files.UploadAsync(UploadFilePath.Text, meta, progress);
             UploadProgress.Value = 100;
 
+            _filesLoaded = false;
+            var displayName = meta.VehicleMake is { Length: > 0 } vm
+                ? $"{vm} {meta.VehicleModel}".Trim()
+                : Path.GetFileName(UploadFilePath.Text);
+
             if (result.IsDuplicate)
             {
                 UploadStatus.Text = string.Empty;
-                ShowToast("Duplicate file — opening existing record.", "ℹ");
                 AppLogger.Info($"Duplicate upload: FileId={result.FileId}");
+                ShowToast("Duplicate file — opening existing record.", "ℹ");
             }
             else
             {
                 UploadStatus.Text = string.Empty;
-                ShowToast("Uploaded! Opening file details…", "✓");
                 AppLogger.Info($"Upload complete: FileId={result.FileId}");
+                var dlg = new SuccessDialog($"File uploaded successfully!\n{Path.GetFileName(UploadFilePath.Text)}") { Owner = this };
+                dlg.Show();
             }
-            _filesLoaded = false; // force refresh next time Files panel is shown
-            OpenFileDetail(result.FileId, meta.VehicleMake is { Length: > 0 } vm
-                ? $"{vm} {meta.VehicleModel}".Trim()
-                : Path.GetFileName(UploadFilePath.Text));
+            OpenFileDetail(result.FileId, displayName);
         }
         catch (Exception ex)
         {

@@ -1,0 +1,54 @@
+<Window x:Class="ChiptuningAi.Dashboard.SuccessDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Success"
+        Width="380" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgDark}"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+
+    <Border Background="{DynamicResource BgPanel}"
+            BorderBrush="{DynamicResource Border}" BorderThickness="1">
+        <StackPanel Margin="28,22">
+
+            <!-- Header row -->
+            <Grid Margin="0,0,0,16">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                               FontSize="20" Foreground="#22C55E"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="SUCCESS" FontSize="11" FontWeight="Bold"
+                               Foreground="#22C55E" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" Content="✕"
+                        Click="Close_Click"
+                        Background="Transparent" BorderThickness="0"
+                        FontSize="13" Cursor="Hand"
+                        Foreground="{DynamicResource TextSecondary}"
+                        ToolTip="Close"/>
+            </Grid>
+
+            <!-- Message -->
+            <TextBlock x:Name="MessageText"
+                       FontSize="14" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimary}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20"/>
+
+            <!-- Countdown bar -->
+            <ProgressBar x:Name="CountdownBar"
+                         Height="4" Maximum="1" Value="1"
+                         Foreground="#22C55E"
+                         Background="{DynamicResource Border}"
+                         Margin="0,0,0,6"/>
+            <TextBlock x:Name="CountdownText"
+                       FontSize="10"
+                       Foreground="{DynamicResource TextSecondary}"
+                       HorizontalAlignment="Right"/>
+
+        </StackPanel>
+    </Border>
+</Window>

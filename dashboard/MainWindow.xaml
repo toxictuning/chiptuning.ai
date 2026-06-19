@@ -344,18 +344,27 @@
                                 <DataGridTextColumn Header="Size (KB)" Binding="{Binding SizeKb}"   Width="75" MinWidth="60"/>
                                 <DataGridTextColumn Header="Patches"   Binding="{Binding PatchCount}" Width="62" MinWidth="55"/>
                                 <DataGridTextColumn Header="Uploaded"  Binding="{Binding Uploaded}" Width="110" MinWidth="90"/>
-                                <DataGridTemplateColumn Header="" Width="46" MinWidth="46">
+                                <DataGridTemplateColumn Header="" Width="82" MinWidth="82">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Tag="{Binding FileId}"
-                                                    Click="DeleteFile_Click"
-                                                    Background="Transparent" BorderThickness="0"
-                                                    Cursor="Hand" ToolTip="Delete file"
-                                                    HorizontalAlignment="Center"
-                                                    Padding="6,2">
-                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
-                                                           FontSize="12" Foreground="#CC4444"/>
-                                            </Button>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <Button Tag="{Binding FileId}"
+                                                        Click="DownloadFile_Click"
+                                                        Background="Transparent" BorderThickness="0"
+                                                        Cursor="Hand" ToolTip="Download original file"
+                                                        Padding="6,2">
+                                                    <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                                                </Button>
+                                                <Button Tag="{Binding FileId}"
+                                                        Click="DeleteFile_Click"
+                                                        Background="Transparent" BorderThickness="0"
+                                                        Cursor="Hand" ToolTip="Delete file"
+                                                        Padding="6,2">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="12" Foreground="#CC4444"/>
+                                                </Button>
+                                            </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
