@@ -249,18 +249,22 @@
                                 <DataGridTemplateColumn Header="" Width="58" CanUserSort="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center" Margin="4,0">
-                                                <TextBlock x:Name="ConflictMark"
-                                                           Text="!" FontSize="12" FontWeight="Bold"
-                                                           Foreground="#F59E0B" Margin="0,0,3,0"
-                                                           VerticalAlignment="Center"
-                                                           ToolTip="Conflict: some bytes match the solution, some match the original"
-                                                           Visibility="Collapsed"/>
-                                                <ToggleButton IsChecked="{Binding IsApplied, Mode=OneWay}"
-                                                              Style="{StaticResource ToggleSwitch}"
-                                                              Click="SolutionToggle_Click"/>
-                                            </StackPanel>
+                                            <!-- Grid stretches to fill the cell; StackPanel centers within it -->
+                                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center">
+                                                    <TextBlock x:Name="ConflictMark"
+                                                               Text="!" FontSize="12" FontWeight="Bold"
+                                                               Foreground="#F59E0B" Margin="0,0,3,0"
+                                                               VerticalAlignment="Center"
+                                                               ToolTip="Conflict: some bytes match the solution, some match the original"
+                                                               Visibility="Collapsed"/>
+                                                    <ToggleButton IsChecked="{Binding IsApplied, Mode=OneWay}"
+                                                                  Style="{StaticResource ToggleSwitch}"
+                                                                  Click="SolutionToggle_Click"/>
+                                                </StackPanel>
+                                            </Grid>
                                             <DataTemplate.Triggers>
                                                 <DataTrigger Binding="{Binding State}" Value="Conflict">
                                                     <Setter TargetName="ConflictMark" Property="Visibility" Value="Visible"/>
