@@ -10,6 +10,33 @@
         AllowsTransparency="True"
         StateChanged="Window_StateChanged">
 
+    <Window.Resources>
+        <!-- Pill-shaped toggle switch: OFF = dark track, ON = accent colour -->
+        <Style x:Key="ToggleSwitch" TargetType="ToggleButton">
+            <Setter Property="Cursor"    Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid Width="38" Height="20" VerticalAlignment="Center">
+                            <Border x:Name="Track" CornerRadius="10" Background="#3A3A3A"/>
+                            <Ellipse x:Name="Thumb" Width="14" Height="14"
+                                     Fill="White" HorizontalAlignment="Left"
+                                     VerticalAlignment="Center" Margin="3,0,0,0"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentButtonBg}"/>
+                                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,3,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Border Background="{DynamicResource BgDark}" BorderThickness="0">
         <Grid>
             <Grid.RowDefinitions>
@@ -213,18 +240,40 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <DataGrid x:Name="PatchesGrid" Grid.Row="0" IsReadOnly="False"
+                        <DataGrid x:Name="PatchesGrid" Grid.Row="0" IsReadOnly="True"
                                   AutoGenerateColumns="False" CanUserAddRows="False"
-                                  HorizontalScrollBarVisibility="Disabled"
+                                  HorizontalScrollBarVisibility="Auto"
                                   HorizontalAlignment="Stretch">
                             <DataGrid.Columns>
-                                <DataGridCheckBoxColumn Header="✓" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
-                                                        Width="36" CanUserSort="False"/>
-                                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"   IsReadOnly="True"/>
+                                <!-- Toggle switch column: ON = apply, OFF = skip/remove -->
+                                <DataGridTemplateColumn Header="" Width="58" CanUserSort="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center" Margin="4,0">
+                                                <TextBlock x:Name="ConflictMark"
+                                                           Text="!" FontSize="12" FontWeight="Bold"
+                                                           Foreground="#F59E0B" Margin="0,0,3,0"
+                                                           VerticalAlignment="Center"
+                                                           ToolTip="Conflict: some bytes match the solution, some match the original"
+                                                           Visibility="Collapsed"/>
+                                                <ToggleButton IsChecked="{Binding IsApplied, Mode=OneWay}"
+                                                              Style="{StaticResource ToggleSwitch}"
+                                                              Click="SolutionToggle_Click"/>
+                                            </StackPanel>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding State}" Value="Conflict">
+                                                    <Setter TargetName="ConflictMark" Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" MinWidth="100" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Version"     Binding="{Binding Version}"     Width="70"  IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Size (KB)"   Binding="{Binding SizeKb}"      Width="72"  IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Created"     Binding="{Binding Created}"     Width="106" IsReadOnly="True"/>
-                                <DataGridTemplateColumn x:Name="PatchActionsColumn" Header="Actions" Width="160" CanUserSort="False">
+                                <DataGridTemplateColumn x:Name="PatchActionsColumn" Header="Actions" Width="200" CanUserSort="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" Margin="4,0">
@@ -260,7 +309,7 @@
                                 BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0"
                                 Padding="0,10,0,0">
                             <StackPanel>
-                                <TextBlock Text="GENERATE — apply selected solutions to a source file"
+                                <TextBlock Text="GENERATE — toggle solutions on/off then generate"
                                            FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>
                                 <Grid>

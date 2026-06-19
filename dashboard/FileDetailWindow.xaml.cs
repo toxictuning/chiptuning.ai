@@ -13,17 +13,20 @@ namespace ChiptuningAi.Dashboard;
 
 file sealed class PatchRow : INotifyPropertyChanged
 {
-    public Guid   PatchId     { get; init; }
-    public string Description { get; init; } = "";
-    public string Version     { get; init; } = "";
-    public string SizeKb      { get; init; } = "";
-    public string Created     { get; init; } = "";
+    public Guid   PatchId            { get; init; }
+    public string Description        { get; init; } = "";
+    public string Version            { get; init; } = "";
+    public string SizeKb             { get; init; } = "";
+    public string Created            { get; init; } = "";
+    public bool   IsInitiallyApplied { get; init; }
+    /// <summary>"Applied", "NotApplied", or "Conflict"</summary>
+    public string State              { get; init; } = "NotApplied";
 
-    private bool _isSelected;
-    public bool IsSelected
+    private bool _isApplied;
+    public bool IsApplied
     {
-        get => _isSelected;
-        set { _isSelected = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected))); }
+        get => _isApplied;
+        set { if (_isApplied == value) return; _isApplied = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsApplied))); }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -157,21 +160,53 @@ public partial class FileDetailWindow : Window
         PatchesGrid.ItemsSource = null;
         try
         {
-            var page = await _client.Patches.ListAsync(f.FileId, take: 100);
-            if (page.Items.Count == 0)
+            List<PatchRow> rows;
+
+            if (_prefilledSourcePath is not null)
             {
-                PatchesStatus.Text = "No solutions found for this file.";
-                return;
+                // USE mode: detect which patches are already applied in the user's file
+                PatchesStatus.Text = "Detecting solution states…";
+                var detected = await _client.Patches.DetectAsync(f.FileId, _prefilledSourcePath);
+                if (detected.Count == 0)
+                {
+                    PatchesStatus.Text = "No solutions found for this file.";
+                    return;
+                }
+                rows = detected.Select(p => new PatchRow
+                {
+                    PatchId            = p.PatchId,
+                    Description        = p.Description ?? "(no description)",
+                    Version            = p.Version ?? "—",
+                    SizeKb             = $"{p.SizeKb:N1}",
+                    Created            = p.CreatedAt.ToString("dd MMM yyyy"),
+                    IsInitiallyApplied = p.State == "Applied",
+                    State              = p.State,
+                    IsApplied          = p.State == "Applied",
+                }).ToList();
             }
-            PatchesGrid.ItemsSource = page.Items.Select(p => new PatchRow
+            else
             {
-                PatchId     = p.PatchId,
-                Description = p.Description ?? "(no description)",
-                Version     = p.Version ?? "—",
-                SizeKb      = $"{p.FileSize / 1024.0:N1}",
-                Created     = p.CreatedAt.ToString("dd MMM yyyy"),
-            }).ToList();
-            PatchesStatus.Text = $"{page.Total} solution(s)";
+                // Non-USE mode: list patches, all start OFF
+                var page = await _client.Patches.ListAsync(f.FileId, take: 100);
+                if (page.Items.Count == 0)
+                {
+                    PatchesStatus.Text = "No solutions found for this file.";
+                    return;
+                }
+                rows = page.Items.Select(p => new PatchRow
+                {
+                    PatchId     = p.PatchId,
+                    Description = p.Description ?? "(no description)",
+                    Version     = p.Version ?? "—",
+                    SizeKb      = $"{p.FileSize / 1024.0:N1}",
+                    Created     = p.CreatedAt.ToString("dd MMM yyyy"),
+                }).ToList();
+                PatchesStatus.Text = $"{page.Total} solution(s)";
+            }
+
+            PatchesGrid.ItemsSource = rows;
+            if (_prefilledSourcePath is not null)
+                PatchesStatus.Text = $"{rows.Count} solution(s)";
         }
         catch (Exception ex)
         {
@@ -278,6 +313,12 @@ public partial class FileDetailWindow : Window
             GenerateSourcePath.Text = dlg.FileName;
     }
 
+    private void SolutionToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Primitives.ToggleButton tb && tb.DataContext is PatchRow row)
+            row.IsApplied = tb.IsChecked == true;
+    }
+
     private async void Generate_Click(object sender, RoutedEventArgs e)
     {
         var sourcePath = GenerateSourcePath.Text.Trim();
@@ -295,21 +336,44 @@ public partial class FileDetailWindow : Window
             usingOriginal = true;
         }
 
-        var selectedRows = (PatchesGrid.ItemsSource as IEnumerable<PatchRow>)?
-            .Where(r => r.IsSelected).ToList() ?? [];
+        var allRows = (PatchesGrid.ItemsSource as IEnumerable<PatchRow>)?.ToList() ?? [];
 
-        var selected = selectedRows.Select(r => r.PatchId).ToList();
+        // Build action list: Apply = toggle turned ON, Remove = toggle turned OFF (USE mode only)
+        var actionList = new List<ChiptuningAi.Client.Patches.PatchClientAction>();
+        var applyDescriptions = new List<string>();
 
-        if (selected.Count == 0)
+        foreach (var row in allRows)
         {
-            GenerateStatus.Text = "Tick at least one patch before generating.";
+            string action;
+            if (row.IsApplied && !row.IsInitiallyApplied)
+            {
+                action = "Apply";
+                applyDescriptions.Add(row.Description);
+            }
+            else if (!row.IsApplied && row.IsInitiallyApplied)
+                action = "Remove";
+            else
+                action = "Skip";
+
+            actionList.Add(new ChiptuningAi.Client.Patches.PatchClientAction { PatchId = row.PatchId, Action = action });
+        }
+
+        var nonSkipCount  = actionList.Count(a => a.Action != "Skip");
+        var applyCount    = actionList.Count(a => a.Action == "Apply");
+        var removeCount   = actionList.Count(a => a.Action == "Remove");
+
+        if (nonSkipCount == 0)
+        {
+            GenerateStatus.Text = _prefilledSourcePath is not null
+                ? "Toggle at least one solution on or off before generating."
+                : "Turn on at least one solution before generating.";
             return;
         }
 
         var prefix = _prefilledSourcePath is not null
             ? System.IO.Path.GetFileNameWithoutExtension(_prefilledSourcePath)
             : _loadedFile is not null ? BuildFilePrefix(_loadedFile) : null;
-        var suggestedName = BuildOutputFileName(selectedRows.Select(r => r.Description), sourcePath, usingOriginal, prefix);
+        var suggestedName = BuildOutputFileName(applyDescriptions, sourcePath, usingOriginal, prefix);
 
         var saveDlg = new SaveFileDialog
         {
@@ -320,25 +384,22 @@ public partial class FileDetailWindow : Window
         };
         if (saveDlg.ShowDialog() != true) return;
 
-        GenerateStatus.Text = usingOriginal
-            ? $"Downloading original file, then applying {selected.Count} solution(s)…"
-            : $"Applying {selected.Count} solution(s)…";
+        GenerateStatus.Text = usingOriginal ? "Downloading original file…" : BuildStatusText(applyCount, removeCount);
         try
         {
             if (usingOriginal)
             {
                 var bytes = await _client.Files.DownloadAsync(_loadedFile!.FileId);
-                tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-                    $"cta_{_loadedFile.FileId:N}.bin");
+                tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"cta_{_loadedFile.FileId:N}.bin");
                 await File.WriteAllBytesAsync(tempFile, bytes);
                 sourcePath = tempFile;
-                GenerateStatus.Text = $"Applying {selected.Count} solution(s) to original…";
+                GenerateStatus.Text = BuildStatusText(applyCount, removeCount);
             }
 
-            var result = await _client.Patches.ProcessAsync(sourcePath, selected);
+            var result = await _client.Patches.GenerateAsync(sourcePath, _fileId, actionList);
             await File.WriteAllBytesAsync(saveDlg.FileName, result);
             GenerateStatus.Text = string.Empty;
-            AppLogger.Info($"Generated {saveDlg.FileName} using {selected.Count} solution(s)");
+            AppLogger.Info($"Generated {saveDlg.FileName} — {applyCount} applied, {removeCount} removed");
             var genFolder = System.IO.Path.GetDirectoryName(saveDlg.FileName);
             new SuccessDialog($"File generated!\n{System.IO.Path.GetFileName(saveDlg.FileName)}", genFolder) { Owner = this }.Show();
         }
@@ -352,6 +413,14 @@ public partial class FileDetailWindow : Window
             if (tempFile is not null && File.Exists(tempFile))
                 File.Delete(tempFile);
         }
+    }
+
+    private static string BuildStatusText(int applyCount, int removeCount)
+    {
+        var parts = new List<string>();
+        if (applyCount  > 0) parts.Add($"applying {applyCount} solution(s)");
+        if (removeCount > 0) parts.Add($"removing {removeCount} solution(s)");
+        return string.Join(", ", parts) + "…";
     }
 
     private static string BuildFilePrefix(ChiptuningAi.Client.Files.FileDetails f)

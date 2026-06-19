@@ -162,4 +162,60 @@ public sealed class PatchesClient
 
         return await _client.PostFormBinaryAsync("/api/patches/process", form, cancellationToken);
     }
+
+    /// <summary>
+    /// Detects which patches for a parent file are already applied, not applied, or conflicted
+    /// in the supplied ECU binary. Returns one result per active patch with metadata and state.
+    /// </summary>
+    /// <param name="parentFileId">Parent file whose patches to check against.</param>
+    /// <param name="filePath">Path to the ECU binary to inspect.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task<List<PatchDetectionResult>> DetectAsync(
+        Guid parentFileId,
+        string filePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("ECU file not found.", filePath);
+
+        using var form = new MultipartFormDataContent();
+        var fileContent = new StreamContent(File.OpenRead(filePath));
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        form.Add(fileContent, "file", Path.GetFileName(filePath));
+
+        return await _client.PostFormAsync<List<PatchDetectionResult>>(
+            $"/api/patches/detect/{parentFileId}", form, cancellationToken);
+    }
+
+    /// <summary>
+    /// Applies, removes, or skips patches on a source ECU file per explicit per-patch actions.
+    /// Apply writes the solution bytes; Remove restores the original master bytes back.
+    /// The result binary is returned directly — not stored server-side.
+    /// </summary>
+    /// <param name="filePath">Source ECU binary to process.</param>
+    /// <param name="parentFileId">Parent file the patches belong to (used for audit).</param>
+    /// <param name="actions">Per-patch actions. Patches with action Skip are no-ops.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Processed binary bytes.</returns>
+    public async Task<byte[]> GenerateAsync(
+        string filePath,
+        Guid parentFileId,
+        IReadOnlyList<PatchClientAction> actions,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("ECU file not found.", filePath);
+
+        using var form = new MultipartFormDataContent();
+        var fileContent = new StreamContent(File.OpenRead(filePath));
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        form.Add(fileContent, "file", Path.GetFileName(filePath));
+        form.Add(new StringContent(parentFileId.ToString()), "parentFileId");
+        var actionsJson = System.Text.Json.JsonSerializer.Serialize(actions);
+        form.Add(new StringContent(actionsJson), "actions");
+
+        return await _client.PostFormBinaryAsync("/api/patches/generate", form, cancellationToken);
+    }
 }

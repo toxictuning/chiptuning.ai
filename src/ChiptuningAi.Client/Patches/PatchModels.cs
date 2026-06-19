@@ -60,3 +60,28 @@ public sealed class PatchHistoryEntry
     /// <summary>When the patch was applied (UTC).</summary>
     public DateTime AppliedAt { get; init; }
 }
+
+/// <summary>
+/// Detection result for one patch against a user-supplied ECU file.
+/// Returned by <see cref="PatchesClient.DetectAsync"/>.
+/// </summary>
+public sealed class PatchDetectionResult
+{
+    public Guid     PatchId     { get; init; }
+    public string?  Description { get; init; }
+    public string?  Version     { get; init; }
+    public double   SizeKb      { get; init; }
+    public DateTime CreatedAt   { get; init; }
+    /// <summary>"Applied", "NotApplied", or "Conflict"</summary>
+    public string State { get; init; } = "NotApplied";
+}
+
+/// <summary>
+/// Per-patch action for <see cref="PatchesClient.GenerateAsync"/>.
+/// </summary>
+public sealed class PatchClientAction
+{
+    public Guid   PatchId { get; init; }
+    /// <summary>"Apply", "Remove", or "Skip"</summary>
+    public string Action  { get; init; } = "Skip";
+}
