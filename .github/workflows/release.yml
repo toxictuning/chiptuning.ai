@@ -1,0 +1,59 @@
+name: Release Dashboard
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore dashboard/ChiptuningAi.Dashboard.csproj
+
+      - name: Publish (self-contained single-file exe)
+        run: >
+          dotnet publish dashboard/ChiptuningAi.Dashboard.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=none
+          --output publish/
+
+      - name: Rename exe to versioned name
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $src = Get-ChildItem publish\*.exe | Select-Object -First 1
+          $dst = "publish\ChiptuningAi-Dashboard-$tag-win-x64.exe"
+          Rename-Item $src.FullName $dst
+          Write-Host "Artifact: $dst"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Dashboard ${{ github.ref_name }}"
+          body: |
+            ## ChiptuningAi Dashboard ${{ github.ref_name }}
+
+            ### Installation
+            Download the `.exe` below — no installer needed, just run it.
+            Windows 10 / 11 x64 required.
+          files: publish/ChiptuningAi-Dashboard-${{ github.ref_name }}-win-x64.exe
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
