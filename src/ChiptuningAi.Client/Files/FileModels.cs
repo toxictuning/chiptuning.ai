@@ -181,17 +181,29 @@ public sealed class FileDetails
 /// <summary>Editable metadata fields for an existing file.</summary>
 public sealed class UpdateFileRequest
 {
+    /// <summary>Vehicle class (e.g. Car, Truck).</summary>
     public required string VehicleClass { get; init; }
+    /// <summary>Vehicle manufacturer (e.g. BMW, Volkswagen).</summary>
     public required string VehicleMake { get; init; }
+    /// <summary>Vehicle model (e.g. 3 Series, Golf).</summary>
     public required string VehicleModel { get; init; }
+    /// <summary>Vehicle variant or trim level.</summary>
     public required string VehicleVariant { get; init; }
+    /// <summary>Engine type or displacement (e.g. 2.0 TDI).</summary>
     public required string EngineType { get; init; }
+    /// <summary>ECU type or family (e.g. EDC17).</summary>
     public required string ECUType { get; init; }
+    /// <summary>ECU manufacturer.</summary>
     public required string ECUMake { get; init; }
+    /// <summary>ECU model or part number.</summary>
     public required string ECUModel { get; init; }
+    /// <summary>Hardware tool used to read the ECU (e.g. Alientech KESS3).</summary>
     public required string ReadHardware { get; init; }
+    /// <summary>Read method used (e.g. OBD, Boot).</summary>
     public required string ReadMode { get; init; }
+    /// <summary>Controller hardware version number (optional).</summary>
     public string? ControllerHWNumber { get; init; }
+    /// <summary>Controller software version number (optional).</summary>
     public string? ControllerSWNumber { get; init; }
 }
 
