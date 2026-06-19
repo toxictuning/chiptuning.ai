@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ChiptuningAi.Client.Files;
 
 /// <summary>
@@ -196,7 +198,8 @@ public sealed class UpdateFileRequest
 /// <summary>A file match returned by the similarity search endpoint.</summary>
 public sealed class SimilarFile
 {
-    /// <summary>File identifier.</summary>
+    /// <summary>File identifier of the matched parent file.</summary>
+    [JsonPropertyName("parentFileId")]
     public Guid FileId { get; init; }
 
     /// <summary>File name.</summary>
