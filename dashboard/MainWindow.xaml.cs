@@ -287,8 +287,30 @@ public partial class MainWindow : Window
         PanelUpload.Visibility   = name == "Upload"   ? Visibility.Visible : Visibility.Collapsed;
         PanelProfile.Visibility  = name == "Profile"  ? Visibility.Visible : Visibility.Collapsed;
 
+        if (name == "Upload")  ResetUploadForm();
         if (name == "Files" && !_filesLoaded) _ = LoadFilesAsync();
         if (name == "Profile") _ = LoadProfileAsync();
+    }
+
+    private void ResetUploadForm()
+    {
+        UploadFilePath.Text = string.Empty;
+        MdVehicleClass.Text  = string.Empty;
+        MdVehicleMake.Text   = string.Empty;
+        MdVehicleModel.Text  = string.Empty;
+        MdVehicleVariant.Text = string.Empty;
+        MdEngineType.Text    = string.Empty;
+        MdECUType.Text       = string.Empty;
+        MdECUMake.Text       = string.Empty;
+        MdECUModel.Text      = string.Empty;
+        MdReadHardware.Text  = string.Empty;
+        MdReadMode.Text      = string.Empty;
+        MdHWNumber.Text      = string.Empty;
+        MdSWNumber.Text      = string.Empty;
+        MdPower.Text         = string.Empty;
+        MdTorque.Text        = string.Empty;
+        UploadStatus.Text    = string.Empty;
+        UploadProgress.Value = 0;
     }
 
     private async void Logout_Click(object sender, RoutedEventArgs e)
@@ -403,11 +425,11 @@ public partial class MainWindow : Window
                 return;
             }
 
-            // Step 3 — no matches → upload
-            UploadFilePath.Text = filePath;
-            ResetDropZone();
-            ShowPanel("Upload");
-            ShowToast("No matches found — file ready to upload.", "ℹ");
+            // Step 3 — no matches → prompt user
+            NoMatchFileName.Text = Path.GetFileName(filePath);
+            DropSearching.Visibility    = Visibility.Collapsed;
+            DropInitial.Visibility      = Visibility.Visible;
+            PanelNoMatchDialog.Visibility = Visibility.Visible;
         }
         catch (Exception ex)
         {
@@ -472,12 +494,25 @@ public partial class MainWindow : Window
 
     private void MatchAdd_Click(object sender, RoutedEventArgs e)
     {
+        var path = _droppedFilePath;
         PanelMatchDialog.Visibility = Visibility.Collapsed;
-        if (_droppedFilePath is not null)
-        {
-            UploadFilePath.Text = _droppedFilePath;
-            ShowPanel("Upload");
-        }
+        ResetDropZone();
+        ShowPanel("Upload");
+        if (path is not null) UploadFilePath.Text = path;
+    }
+
+    private void NoMatchAdd_Click(object sender, RoutedEventArgs e)
+    {
+        var path = _droppedFilePath;
+        PanelNoMatchDialog.Visibility = Visibility.Collapsed;
+        ResetDropZone();
+        ShowPanel("Upload");
+        if (path is not null) UploadFilePath.Text = path;
+    }
+
+    private void NoMatchCancel_Click(object sender, RoutedEventArgs e)
+    {
+        PanelNoMatchDialog.Visibility = Visibility.Collapsed;
         ResetDropZone();
     }
 

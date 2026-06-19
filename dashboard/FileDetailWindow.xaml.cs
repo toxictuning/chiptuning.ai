@@ -427,6 +427,73 @@ public partial class FileDetailWindow : Window
         }
     }
 
+    // ── Metadata edit ─────────────────────────────────────────────────────────
+
+    private void EditMetadata_Click(object sender, RoutedEventArgs e)
+    {
+        if (_loadedFile is null) return;
+
+        EditVehicleClass.Text   = _loadedFile.VehicleClass;
+        EditVehicleMake.Text    = _loadedFile.VehicleMake;
+        EditVehicleModel.Text   = _loadedFile.VehicleModel;
+        EditVehicleVariant.Text = _loadedFile.VehicleVariant;
+        EditEngineType.Text     = _loadedFile.EngineType;
+        EditECUType.Text        = _loadedFile.ECUType;
+        EditECUMake.Text        = _loadedFile.ECUMake;
+        EditECUModel.Text       = _loadedFile.ECUModel;
+        EditReadHardware.Text   = _loadedFile.ReadHardware;
+        EditReadMode.Text       = _loadedFile.ReadMode;
+        EditHWNumber.Text       = _loadedFile.ControllerHWNumber ?? string.Empty;
+        EditSWNumber.Text       = _loadedFile.ControllerSWNumber ?? string.Empty;
+        EditStatus.Text         = string.Empty;
+
+        SidebarContent.Visibility = Visibility.Collapsed;
+        SidebarEdit.Visibility    = Visibility.Visible;
+    }
+
+    private void EditCancel_Click(object sender, RoutedEventArgs e)
+    {
+        SidebarEdit.Visibility    = Visibility.Collapsed;
+        SidebarContent.Visibility = Visibility.Visible;
+    }
+
+    private async void EditSave_Click(object sender, RoutedEventArgs e)
+    {
+        EditStatus.Text = "Saving…";
+        try
+        {
+            var req = new ChiptuningAi.Client.Files.UpdateFileRequest
+            {
+                VehicleClass      = EditVehicleClass.Text.Trim(),
+                VehicleMake       = EditVehicleMake.Text.Trim(),
+                VehicleModel      = EditVehicleModel.Text.Trim(),
+                VehicleVariant    = EditVehicleVariant.Text.Trim(),
+                EngineType        = EditEngineType.Text.Trim(),
+                ECUType           = EditECUType.Text.Trim(),
+                ECUMake           = EditECUMake.Text.Trim(),
+                ECUModel          = EditECUModel.Text.Trim(),
+                ReadHardware      = EditReadHardware.Text.Trim(),
+                ReadMode          = EditReadMode.Text.Trim(),
+                ControllerHWNumber = NullIfEmpty(EditHWNumber.Text),
+                ControllerSWNumber = NullIfEmpty(EditSWNumber.Text),
+            };
+
+            await _client.Files.UpdateAsync(_fileId, req);
+            AppLogger.Info($"Metadata updated for file {_fileId}");
+
+            // Reload sidebar with fresh data
+            var updated = await _client.Files.GetAsync(_fileId);
+            PopulateSidebar(updated);
+            SidebarEdit.Visibility    = Visibility.Collapsed;
+            SidebarContent.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Metadata update failed for {_fileId}", ex);
+            EditStatus.Text = $"Save failed: {ex.Message}";
+        }
+    }
+
     private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
 }
 

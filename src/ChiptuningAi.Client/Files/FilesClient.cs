@@ -121,6 +121,15 @@ public sealed class FilesClient
         => _client.GetBinaryAsync($"/api/files/{fileId}/download", cancellationToken);
 
     /// <summary>
+    /// Updates editable metadata for a file (vehicle, ECU, read info).
+    /// </summary>
+    /// <param name="fileId">The file identifier to update.</param>
+    /// <param name="request">New metadata values.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task UpdateAsync(Guid fileId, UpdateFileRequest request, CancellationToken cancellationToken = default)
+        => _client.PatchAsync($"/api/files/{fileId}", request, cancellationToken);
+
+    /// <summary>
     /// Soft-deletes a file. The file is hidden immediately and permanently purged after 30 days.
     /// </summary>
     /// <param name="fileId">The file identifier to delete.</param>

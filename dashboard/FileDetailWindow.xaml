@@ -112,7 +112,78 @@
                                            Foreground="{DynamicResource TextSecondary}"
                                            TextWrapping="Wrap"/>
 
+                                <Separator Background="{DynamicResource Border}" Margin="0,14,0,12"/>
+
+                                <Button Content="Edit Metadata"
+                                        Style="{StaticResource GhostButton}"
+                                        HorizontalAlignment="Stretch"
+                                        Click="EditMetadata_Click"/>
+
                             </StackPanel>
+
+                            <!-- Edit metadata form -->
+                            <StackPanel x:Name="SidebarEdit" Visibility="Collapsed" Margin="0,8,0,0">
+
+                                <TextBlock Text="EDIT METADATA" FontSize="10" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,10"/>
+
+                                <TextBlock Text="Vehicle Class" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditVehicleClass" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="Make" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditVehicleMake" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="Model" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditVehicleModel" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="Variant" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditVehicleVariant" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="Engine Type" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditEngineType" Style="{StaticResource DarkTextBox}" Margin="0,0,0,10"/>
+
+                                <TextBlock Text="ECU Type" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditECUType" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="ECU Make" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditECUMake" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="ECU Model" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,6"/>
+                                <TextBox x:Name="EditECUModel" Style="{StaticResource DarkTextBox}" Margin="0,0,0,10"/>
+
+                                <TextBlock Text="Read Hardware" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditReadHardware" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="Read Mode" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditReadMode" Style="{StaticResource DarkTextBox}" Margin="0,0,0,10"/>
+
+                                <TextBlock Text="HW Number (optional)" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditHWNumber" Style="{StaticResource DarkTextBox}" Margin="0,0,0,6"/>
+
+                                <TextBlock Text="SW Number (optional)" FontSize="10" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,2"/>
+                                <TextBox x:Name="EditSWNumber" Style="{StaticResource DarkTextBox}" Margin="0,0,0,12"/>
+
+                                <TextBlock x:Name="EditStatus" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Content="Cancel"
+                                            Style="{StaticResource GhostButton}"
+                                            Margin="0,0,4,0" HorizontalAlignment="Stretch"
+                                            Click="EditCancel_Click"/>
+                                    <Button Grid.Column="1" Content="Save"
+                                            Style="{StaticResource AccentButton}"
+                                            Margin="4,0,0,0" HorizontalAlignment="Stretch"
+                                            Click="EditSave_Click"/>
+                                </Grid>
+
+                            </StackPanel>
+
                         </StackPanel>
                     </ScrollViewer>
                 </Border>

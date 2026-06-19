@@ -173,6 +173,23 @@ public sealed class FileDetails
     public IReadOnlyList<string>? ChunkHashes { get; init; }
 }
 
+/// <summary>Editable metadata fields for an existing file.</summary>
+public sealed class UpdateFileRequest
+{
+    public required string VehicleClass { get; init; }
+    public required string VehicleMake { get; init; }
+    public required string VehicleModel { get; init; }
+    public required string VehicleVariant { get; init; }
+    public required string EngineType { get; init; }
+    public required string ECUType { get; init; }
+    public required string ECUMake { get; init; }
+    public required string ECUModel { get; init; }
+    public required string ReadHardware { get; init; }
+    public required string ReadMode { get; init; }
+    public string? ControllerHWNumber { get; init; }
+    public string? ControllerSWNumber { get; init; }
+}
+
 /// <summary>A file match returned by the similarity search endpoint.</summary>
 public sealed class SimilarFile
 {
