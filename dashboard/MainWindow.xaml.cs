@@ -289,7 +289,7 @@ public partial class MainWindow : Window
         PanelProfile.Visibility  = name == "Profile"  ? Visibility.Visible : Visibility.Collapsed;
 
         if (name == "Upload")  ResetUploadForm();
-        if (name == "Files") _ = LoadFilesAsync();
+        if (name == "Files") _ = LoadFilesAsync(silent: _filesLoaded);
         if (name == "Profile") _ = LoadProfileAsync();
     }
 
@@ -571,10 +571,13 @@ public partial class MainWindow : Window
 
     // ── Files ─────────────────────────────────────────────────────────────────
 
-    private async Task LoadFilesAsync()
+    private async Task LoadFilesAsync(bool silent = false)
     {
-        FilesStatus.Text          = "Loading…";
-        FilesGrid.ItemsSource     = null;
+        if (!silent)
+        {
+            FilesStatus.Text      = "Loading…";
+            FilesGrid.ItemsSource = null;
+        }
         FilesLoadingBar.Visibility = Visibility.Visible;
         try
         {
