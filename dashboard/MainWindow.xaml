@@ -529,14 +529,21 @@
 
             <!-- ── Match dialog overlay ── -->
             <Grid x:Name="PanelMatchDialog" Grid.RowSpan="2" Visibility="Collapsed"
-                  Panel.ZIndex="50" Background="#CC000000">
+                  Panel.ZIndex="50" Background="#CC000000" UseLayoutRounding="True">
+                <!-- Shadow layer (separate from content to avoid blurring text) -->
+                <Border Width="560" MaxHeight="500"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Background="{DynamicResource BgPanel}">
+                    <Border.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="6"
+                                          Opacity="0.6" Direction="270"/>
+                    </Border.Effect>
+                </Border>
+                <!-- Content layer (no effect = crisp text) -->
                 <Border Background="{DynamicResource BgPanel}" Padding="32"
                         Width="560" MaxHeight="500"
-                        VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Border.Effect>
-                        <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="8"
-                                          Opacity="0.65" Direction="270"/>
-                    </Border.Effect>
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        UseLayoutRounding="True">
                     <StackPanel>
                         <TextBlock x:Name="MatchDialogTitle"
                                    Text="{DynamicResource Match.Title}" FontSize="11" FontWeight="Bold"
@@ -551,7 +558,7 @@
                                   SelectionMode="Single">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="*"/>
-                                <DataGridTextColumn Header="Match %"   Binding="{Binding SimilarityPct}" Width="90"/>
+                                <DataGridTextColumn Header="Match %"   Binding="{Binding SimilarityPct}" Width="120"/>
                             </DataGrid.Columns>
                         </DataGrid>
 
@@ -597,13 +604,17 @@
 
             <!-- ── No-match dialog overlay ── -->
             <Grid x:Name="PanelNoMatchDialog" Grid.RowSpan="2" Visibility="Collapsed"
-                  Panel.ZIndex="50" Background="#CC000000">
-                <Border Background="{DynamicResource BgPanel}" Padding="32"
-                        Width="440" VerticalAlignment="Center" HorizontalAlignment="Center">
+                  Panel.ZIndex="50" Background="#CC000000" UseLayoutRounding="True">
+                <Border Width="440" VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Background="{DynamicResource BgPanel}">
                     <Border.Effect>
-                        <DropShadowEffect Color="Black" BlurRadius="24" ShadowDepth="8"
-                                          Opacity="0.65" Direction="270"/>
+                        <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="6"
+                                          Opacity="0.6" Direction="270"/>
                     </Border.Effect>
+                </Border>
+                <Border Background="{DynamicResource BgPanel}" Padding="32"
+                        Width="440" VerticalAlignment="Center" HorizontalAlignment="Center"
+                        UseLayoutRounding="True">
                     <StackPanel>
                         <TextBlock Text="NO MATCHES FOUND" FontSize="11" FontWeight="Bold"
                                    Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/>

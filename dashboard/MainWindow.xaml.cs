@@ -525,6 +525,7 @@ public partial class MainWindow : Window
         ResetDropZone();
         var win = new FileDetailWindow(_client, best.FileId, best.FileName, sourceFilePath: filePath);
         win.Owner = this;
+        win.Closed += (_, _) => Activate();
         win.Show();
     }
 
@@ -532,6 +533,7 @@ public partial class MainWindow : Window
     {
         var win = new FileDetailWindow(_client, fileId, fileName);
         win.Owner = this;
+        win.Closed += (_, _) => Activate();
         win.Show();
     }
 

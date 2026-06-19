@@ -425,7 +425,7 @@ public partial class FileDetailWindow : Window
         PatchUploadStatus.Text = "Uploading patch…";
         try
         {
-            var desc    = NullIfEmpty(PatchDescription.Text == "Description (optional)" ? null : PatchDescription.Text);
+            var desc    = NullIfEmpty(PatchDescription.Text == "Description" ? null : PatchDescription.Text);
             var version = NullIfEmpty(PatchVersion.Text == "v1.0" ? "v1.0" : PatchVersion.Text);
 
             var result = await _client.Patches.UploadAsync(path, _fileId, desc, version);
@@ -442,6 +442,35 @@ public partial class FileDetailWindow : Window
         {
             AppLogger.Error($"Patch upload failed for file {_fileId}", ex);
             PatchUploadStatus.Text = "Patch upload failed. Check the log for details.";
+        }
+    }
+
+    // ── Download original ─────────────────────────────────────────────────────
+
+    private async void DownloadOriginal_Click(object sender, RoutedEventArgs e)
+    {
+        if (_loadedFile is null) return;
+
+        var saveDlg = new SaveFileDialog
+        {
+            Title            = "Save original ECU file",
+            Filter           = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
+            FileName         = _loadedFile.FileName,
+        };
+        if (saveDlg.ShowDialog() != true) return;
+
+        PatchesStatus.Text = "Downloading original…";
+        try
+        {
+            var data = await _client.Files.DownloadAsync(_loadedFile.FileId);
+            await File.WriteAllBytesAsync(saveDlg.FileName, data);
+            AppLogger.Info($"Downloaded original file {_fileId} to {saveDlg.FileName}");
+            PatchesStatus.Text = $"Saved — {System.IO.Path.GetFileName(saveDlg.FileName)}";
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Download original failed for {_fileId}", ex);
+            PatchesStatus.Text = $"Download failed: {ex.Message}";
         }
     }
 

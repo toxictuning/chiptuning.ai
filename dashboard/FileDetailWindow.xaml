@@ -118,6 +118,12 @@
                                         Style="{StaticResource GhostButton}"
                                         HorizontalAlignment="Stretch"
                                         Click="EditMetadata_Click"/>
+                                <Button Content="Download Original"
+                                        Style="{StaticResource GhostButton}"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0,4,0,0"
+                                        ToolTip="Download original unmodified ECU file"
+                                        Click="DownloadOriginal_Click"/>
 
                             </StackPanel>
 
@@ -317,7 +323,7 @@
                                     <TextBox x:Name="PatchDescription" Grid.Column="2"
                                              Style="{StaticResource DarkTextBox}"
                                              Margin="0,0,6,0"
-                                             Text="Description (optional)"
+                                             Text="Description"
                                              ToolTip="Short description of this patch (e.g. Stage 1 +30hp)"/>
                                     <TextBox x:Name="PatchVersion" Grid.Column="3"
                                              Style="{StaticResource DarkTextBox}"
