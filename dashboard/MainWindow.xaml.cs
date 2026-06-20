@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Security.Cryptography;
 using System.Windows;
@@ -9,10 +10,33 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using ChiptuningAi.Client;
+using ChiptuningAi.Client.BulkImport;
 using ChiptuningAi.Client.Files;
 using ChiptuningAi.Dashboard.Services;
 
 namespace ChiptuningAi.Dashboard;
+
+// ── Bulk import row (live-updates during upload) ──────────────────────────────
+internal sealed class BulkRow : INotifyPropertyChanged
+{
+    private string _importStatus = string.Empty;
+
+    public required string       FileName     { get; init; }
+    public required string       Vehicle      { get; init; }
+    public required string       Ecu          { get; init; }
+    public          string?      Power        { get; init; }
+    public          string?      ErrorText    { get; init; }
+    public          string?      FilePath     { get; set;  }
+    public required ParsedFileDto Parsed      { get; init; }
+
+    public string ImportStatus
+    {
+        get => _importStatus;
+        set { _importStatus = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImportStatus))); }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+}
 
 file sealed record FileRow(
     Guid   FileId,
@@ -32,6 +56,11 @@ public partial class MainWindow : Window
     private Guid _currentUserId;
     private string? _droppedFilePath;
     private IReadOnlyList<SimilarFile> _currentSimilarFiles = [];
+
+    // ── Bulk import state ─────────────────────────────────────────────────────
+    private bool _isBusiness;
+    private readonly ObservableCollection<BulkRow> _bulkRows = [];
+    private List<string> _pendingBulkPaths = [];
 
     // ── Match row ─────────────────────────────────────────────────────────────
     private sealed record MatchRow(Guid FileId, string FileName, string SimilarityPct);
@@ -106,7 +135,8 @@ public partial class MainWindow : Window
         _client = client;
         _apiUrl = apiUrl;
         _email  = email;
-        ToastList.ItemsSource = _toasts;
+        ToastList.ItemsSource  = _toasts;
+        BulkGrid.ItemsSource   = _bulkRows;
 
         ThemeToggleBtn.Content = ThemeManager.IsDark ? "☾" : "☀";
         UpdateSwatchHighlight();
@@ -283,13 +313,14 @@ public partial class MainWindow : Window
 
     private void ShowPanel(string name)
     {
-        PanelDropZone.Visibility = name == "DropZone" ? Visibility.Visible : Visibility.Collapsed;
-        PanelFiles.Visibility    = name == "Files"    ? Visibility.Visible : Visibility.Collapsed;
-        PanelUpload.Visibility   = name == "Upload"   ? Visibility.Visible : Visibility.Collapsed;
-        PanelProfile.Visibility  = name == "Profile"  ? Visibility.Visible : Visibility.Collapsed;
+        PanelDropZone.Visibility    = name == "DropZone"    ? Visibility.Visible : Visibility.Collapsed;
+        PanelFiles.Visibility       = name == "Files"       ? Visibility.Visible : Visibility.Collapsed;
+        PanelUpload.Visibility      = name == "Upload"      ? Visibility.Visible : Visibility.Collapsed;
+        PanelProfile.Visibility     = name == "Profile"     ? Visibility.Visible : Visibility.Collapsed;
+        PanelBulkImport.Visibility  = name == "BulkImport" ? Visibility.Visible : Visibility.Collapsed;
 
         if (name == "Upload")  ResetUploadForm();
-        if (name == "Files") _ = LoadFilesAsync(silent: _filesLoaded);
+        if (name == "Files")   _ = LoadFilesAsync(silent: _filesLoaded);
         if (name == "Profile") _ = LoadProfileAsync();
     }
 
@@ -565,6 +596,10 @@ public partial class MainWindow : Window
             ProfStorage.Text = limitMb >= 1024
                 ? $"{usedMb / 1024:N2} GB of {limitMb / 1024:N0} GB used  ({pct:N1}%)"
                 : $"{usedMb:N1} MB of {limitMb:N0} MB used  ({pct:N1}%)";
+
+            _isBusiness = p.Tier.Equals("Business", StringComparison.OrdinalIgnoreCase);
+            BulkLockOverlay.Visibility     = _isBusiness ? Visibility.Collapsed : Visibility.Visible;
+            BulkImportTierBadge.Visibility = _isBusiness ? Visibility.Collapsed : Visibility.Visible;
         }
         catch (Exception ex) { AppLogger.Error("LoadProfile failed", ex); }
     }
@@ -916,6 +951,199 @@ public partial class MainWindow : Window
                 Dispatcher.InvokeAsync(() => busy = false, DispatcherPriority.Background);
             }
         };
+    }
+
+    // ── Bulk Import ───────────────────────────────────────────────────────────
+
+    private void BulkSelectFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFolderDialog { Title = "Select folder containing ECU files" };
+        if (dlg.ShowDialog() != true) return;
+
+        var paths = Directory.GetFiles(dlg.FolderName, "*", SearchOption.TopDirectoryOnly)
+            .Where(f =>
+            {
+                var ext = Path.GetExtension(f).ToLowerInvariant();
+                return ext is ".bin" or ".ori" or ".hex" or ".bak" or "";
+            })
+            .ToList();
+
+        if (paths.Count == 0)
+        {
+            ShowToast("No ECU files found in that folder.", "⚠");
+            return;
+        }
+
+        _pendingBulkPaths = paths;
+        BulkPathBox.Text  = $"{dlg.FolderName}  ({paths.Count} file{(paths.Count == 1 ? "" : "s")})";
+        _bulkRows.Clear();
+        BulkSummaryText.Text    = string.Empty;
+        BulkOverallProgress.Visibility = Visibility.Collapsed;
+        BulkParseBtn.IsEnabled  = true;
+        BulkImportBtn.IsEnabled = false;
+        BulkActivityLog.Items.Clear();
+        WriteBulkLog("Ready — click Parse Filenames to continue.");
+    }
+
+    private void BulkSelectFiles_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title     = "Select ECU files",
+            Filter    = "ECU files (*.bin;*.ori;*.hex;*.bak)|*.bin;*.ori;*.hex;*.bak|All files (*.*)|*.*",
+            Multiselect = true,
+        };
+        if (dlg.ShowDialog() != true || dlg.FileNames.Length == 0) return;
+
+        _pendingBulkPaths = [.. dlg.FileNames];
+        BulkPathBox.Text  = _pendingBulkPaths.Count == 1
+            ? _pendingBulkPaths[0]
+            : $"{_pendingBulkPaths.Count} files selected";
+        _bulkRows.Clear();
+        BulkSummaryText.Text    = string.Empty;
+        BulkOverallProgress.Visibility = Visibility.Collapsed;
+        BulkParseBtn.IsEnabled  = true;
+        BulkImportBtn.IsEnabled = false;
+        BulkActivityLog.Items.Clear();
+        WriteBulkLog("Ready — click Parse Filenames to continue.");
+    }
+
+    private async void BulkParse_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pendingBulkPaths.Count == 0) return;
+
+        BulkParseBtn.IsEnabled  = false;
+        BulkImportBtn.IsEnabled = false;
+        _bulkRows.Clear();
+        BulkSummaryText.Text = "Parsing…";
+        BulkActivityLog.Items.Clear();
+
+        try
+        {
+            var filenames = _pendingBulkPaths.Select(p => Path.GetFileName(p) ?? p).ToList();
+            WriteBulkLog($"Sending {filenames.Count} filename(s) to server for parsing…");
+
+            var results = await _client.BulkImport.ParseFilenamesAsync(filenames);
+
+            var pathByName = _pendingBulkPaths
+                .GroupBy(Path.GetFileName)
+                .ToDictionary(g => g.Key!, g => g.First());
+
+            foreach (var dto in results)
+            {
+                var vehicle = string.Join(" ", new[]
+                {
+                    dto.VehicleClass, dto.VehicleMake, dto.VehicleModel
+                }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+                var ecu = string.Join(" ", new[]
+                {
+                    dto.ECUMake, dto.ECUModel
+                }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+                var row = new BulkRow
+                {
+                    FileName     = dto.OriginalName,
+                    Vehicle      = vehicle,
+                    Ecu          = ecu,
+                    Power        = dto.PowerOutput.HasValue ? $"{dto.PowerOutput}" : null,
+                    ErrorText    = dto.Errors.Length > 0 ? string.Join("; ", dto.Errors) : null,
+                    ImportStatus = dto.Status == "Valid" ? "Valid" : "Invalid",
+                    Parsed       = dto,
+                };
+
+                pathByName.TryGetValue(dto.OriginalName, out var filePath);
+                row.FilePath = filePath;
+
+                _bulkRows.Add(row);
+            }
+
+            var validCount   = _bulkRows.Count(r => r.ImportStatus == "Valid");
+            var invalidCount = _bulkRows.Count(r => r.ImportStatus == "Invalid");
+            BulkSummaryText.Text = $"{validCount} valid · {invalidCount} invalid";
+
+            WriteBulkLog($"Parse complete: {validCount} valid, {invalidCount} invalid.");
+            BulkImportBtn.IsEnabled = validCount > 0;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Bulk parse failed", ex);
+            ShowToast($"Parse failed: {ex.Message}", "✕");
+            BulkSummaryText.Text = "Parse failed.";
+            WriteBulkLog($"Error: {ex.Message}");
+        }
+        finally
+        {
+            BulkParseBtn.IsEnabled = true;
+        }
+    }
+
+    private async void BulkImportStart_Click(object sender, RoutedEventArgs e)
+    {
+        var validRows = _bulkRows.Where(r => r.ImportStatus == "Valid" && r.FilePath is not null).ToList();
+        if (validRows.Count == 0) return;
+
+        BulkImportBtn.IsEnabled = false;
+        BulkParseBtn.IsEnabled  = false;
+        BulkOverallProgress.Visibility = Visibility.Visible;
+        BulkOverallProgress.Value      = 0;
+
+        var done    = 0;
+        var success = 0;
+        var failed  = 0;
+
+        WriteBulkLog($"Starting import of {validRows.Count} file(s)…");
+
+        foreach (var row in validRows)
+        {
+            row.ImportStatus = "Uploading…";
+            WriteBulkLog($"→ {row.FileName}");
+
+            try
+            {
+                var result = await _client.BulkImport.ImportFileAsync(row.FilePath!, row.Parsed);
+
+                if (result.Success)
+                {
+                    row.ImportStatus = "✓ Done";
+                    success++;
+                    AppLogger.Info($"Bulk import OK: {row.FileName} → FileId={result.FileId}");
+                    WriteBulkLog($"  ✓ {row.FileName}");
+                }
+                else
+                {
+                    row.ImportStatus = "✗ Failed";
+                    failed++;
+                    AppLogger.Error($"Bulk import rejected: {row.FileName} — {result.Error}");
+                    WriteBulkLog($"  ✗ {row.FileName}: {result.Error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                row.ImportStatus = "✗ Failed";
+                failed++;
+                AppLogger.Error($"Bulk import exception: {row.FileName}", ex);
+                WriteBulkLog($"  ✗ {row.FileName}: {ex.Message}");
+            }
+
+            done++;
+            BulkOverallProgress.Value = (double)done / validRows.Count * 100;
+        }
+
+        BulkSummaryText.Text = $"{success} imported · {failed} failed";
+        WriteBulkLog($"Import complete — {success} succeeded, {failed} failed.");
+        ShowToast($"Bulk import: {success} uploaded, {failed} failed.", success > 0 ? "✓" : "⚠");
+
+        _filesLoaded = false;
+        BulkParseBtn.IsEnabled  = true;
+        BulkImportBtn.IsEnabled = failed > 0;
+    }
+
+    private void WriteBulkLog(string message)
+    {
+        var timestamp = DateTime.Now.ToString("HH:mm:ss");
+        BulkActivityLog.Items.Add($"[{timestamp}]  {message}");
+        BulkActivityLog.ScrollIntoView(BulkActivityLog.Items[^1]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

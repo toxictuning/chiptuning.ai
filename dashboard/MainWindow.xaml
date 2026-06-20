@@ -190,6 +190,24 @@
                                     <TextBlock Text="{DynamicResource Nav.Profile}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
+                            <Button x:Name="NavBulkImport"
+                                    Style="{StaticResource GhostButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                    Margin="0,0,0,8" Click="Nav_Click" Tag="BulkImport"
+                                    ToolTip="Import multiple ECU files at once — Business plan required">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                               Width="20" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Bulk Import" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <Border x:Name="BulkImportTierBadge"
+                                            Background="{DynamicResource GhostButtonBg}"
+                                            Padding="4,1" VerticalAlignment="Center">
+                                        <TextBlock Text="BUSINESS" FontSize="8" FontWeight="Bold"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -526,6 +544,134 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
+
+                    <!-- ── Bulk Import panel ── -->
+                    <Grid x:Name="PanelBulkImport" Visibility="Collapsed">
+                        <!-- Lock overlay — shown when user is not Business tier -->
+                        <Grid x:Name="BulkLockOverlay" Panel.ZIndex="20" Visibility="Collapsed">
+                            <Rectangle Fill="{DynamicResource BgDark}" Opacity="0.90"/>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="44"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <TextBlock Text="Business Plan Required"
+                                           FontSize="18" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondary}"
+                                           HorizontalAlignment="Center" TextAlignment="Center"
+                                           Text="Bulk import is available on the Business plan only.&#x0a;Please upgrade your account to access this feature."/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Content -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="Bulk Import" FontSize="20" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                                <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                                           TextWrapping="Wrap" Margin="0,0,0,16"
+                                           Text="Select a folder or individual ECU files named using the standard convention. Filenames are parsed for metadata on the server, then uploaded one by one."/>
+
+                                <!-- Controls -->
+                                <Border Background="{DynamicResource BgPanel}" Padding="20" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox x:Name="BulkPathBox" Grid.Column="0"
+                                                     Style="{StaticResource DarkTextBox}"
+                                                     Margin="0,0,8,0" IsReadOnly="True"
+                                                     ToolTip="Selected folder or files"/>
+                                            <Button Grid.Column="1" Content="Select Folder"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Margin="0,0,8,0"
+                                                    Click="BulkSelectFolder_Click"
+                                                    ToolTip="Pick a folder — all .bin files inside will be listed"/>
+                                            <Button Grid.Column="2" Content="Select Files"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="BulkSelectFiles_Click"
+                                                    ToolTip="Pick individual files"/>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button x:Name="BulkParseBtn" Content="Parse Filenames"
+                                                    Style="{StaticResource GhostButton}"
+                                                    IsEnabled="False"
+                                                    Click="BulkParse_Click"
+                                                    ToolTip="Analyse filenames and preview extracted metadata"/>
+                                            <Button x:Name="BulkImportBtn" Content="Import Valid Files"
+                                                    Style="{StaticResource AccentButton}"
+                                                    IsEnabled="False"
+                                                    Margin="8,0,0,0"
+                                                    Click="BulkImportStart_Click"
+                                                    ToolTip="Upload all files that parsed as Valid"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Results -->
+                                <Border Background="{DynamicResource BgPanel}" Padding="0">
+                                    <StackPanel>
+                                        <Grid Margin="16,12,16,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Files" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimary}"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="BulkSummaryText" Grid.Column="1"
+                                                       FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <ProgressBar x:Name="BulkOverallProgress" Height="2"
+                                                     Minimum="0" Maximum="100" Value="0"
+                                                     Foreground="{DynamicResource AccentButtonBg}"
+                                                     Background="{DynamicResource Border}"
+                                                     Visibility="Collapsed"/>
+
+                                        <DataGrid x:Name="BulkGrid"
+                                                  AutoGenerateColumns="False"
+                                                  CanUserAddRows="False"
+                                                  IsReadOnly="True"
+                                                  SelectionUnit="FullRow"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  ColumnWidth="*"
+                                                  MinHeight="60"
+                                                  MaxHeight="300">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Status"  Binding="{Binding ImportStatus}" Width="100" MinWidth="85"/>
+                                                <DataGridTextColumn Header="File"    Binding="{Binding FileName}"     Width="2*"  MinWidth="140"/>
+                                                <DataGridTextColumn Header="Vehicle" Binding="{Binding Vehicle}"      Width="2*"  MinWidth="120"/>
+                                                <DataGridTextColumn Header="ECU"     Binding="{Binding Ecu}"          Width="*"   MinWidth="100"/>
+                                                <DataGridTextColumn Header="kW"      Binding="{Binding Power}"        Width="45"  MinWidth="40"/>
+                                                <DataGridTextColumn Header="Errors"  Binding="{Binding ErrorText}"    Width="*"   MinWidth="100"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
+                                        <!-- Activity log -->
+                                        <Border BorderThickness="0,1,0,0"
+                                                BorderBrush="{DynamicResource Border}">
+                                            <ListBox x:Name="BulkActivityLog"
+                                                     MaxHeight="130"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Padding="12,6"
+                                                     IsHitTestVisible="False"
+                                                     Foreground="{DynamicResource TextSecondary}"
+                                                     FontSize="11"
+                                                     FontFamily="Consolas, Courier New"
+                                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
 
                   </Grid>
                 </Border>

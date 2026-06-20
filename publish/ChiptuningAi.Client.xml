@@ -1,0 +1,703 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ChiptuningAi.Client</name>
+    </assembly>
+    <members>
+        <member name="T:ChiptuningAi.Client.Auth.AuthClient">
+            <summary>
+            Handles authentication against the Chiptuning.Ai API.
+            Tokens are managed automatically by <see cref="T:ChiptuningAi.Client.ChiptuningAiClient"/> —
+            you only need to call <see cref="M:ChiptuningAi.Client.Auth.AuthClient.LoginAsync(System.String,System.String,System.Threading.CancellationToken)"/> once per session.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Auth.AuthClient.LoginAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Authenticates with the API and stores the resulting tokens for all subsequent requests.
+            </summary>
+            <param name="email">Account email address.</param>
+            <param name="password">Account password.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The token response including access token, refresh token, and expiry.</returns>
+            <exception cref="T:ChiptuningAi.Client.Common.ApiException">Thrown if credentials are invalid.</exception>
+        </member>
+        <member name="M:ChiptuningAi.Client.Auth.AuthClient.RefreshAsync(System.Threading.CancellationToken)">
+            <summary>
+            Exchanges the current refresh token for a new access token.
+            Called automatically when a request returns HTTP 401.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Auth.AuthClient.LogoutAsync(System.Threading.CancellationToken)">
+            <summary>Revokes the current session.</summary>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Auth.AuthClient.GetProfileAsync(System.Threading.CancellationToken)">
+            <summary>Returns the authenticated user's profile and plan details.</summary>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:ChiptuningAi.Client.Auth.TokenResponse">
+            <summary>Returned after a successful login or token refresh.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.TokenResponse.TokenField">
+            <summary>Primary token field name used by some API versions.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.TokenResponse.AccessTokenField">
+            <summary>Alternate camelCase spelling some API versions use.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.TokenResponse.AccessTokenSnakeField">
+            <summary>Alternate snake_case spelling some API versions use.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.TokenResponse.Token">
+            <summary>JWT access token, resolved from whichever field the server sent.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.TokenResponse.RefreshToken">
+            <summary>Opaque refresh token used to obtain a new access token without re-entering credentials.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.TokenResponse.ExpiresIn">
+            <summary>Number of seconds until the access token expires.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.TokenResponse.ExtraFields">
+            <summary>Captures any extra fields so we can show them in diagnostics if the token is missing.</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Auth.UserProfile">
+            <summary>Authenticated user profile returned by <c>GET /api/auth/me</c>.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.UserProfile.Id">
+            <summary>Unique user identifier.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.UserProfile.Email">
+            <summary>Account email address.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.UserProfile.Tier">
+            <summary>Subscription tier (e.g. <c>Basic</c>, <c>Premium</c>).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.UserProfile.StorageUsedBytes">
+            <summary>Total storage consumed in bytes.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Auth.UserProfile.StorageLimitBytes">
+            <summary>Storage allowance for the current tier in bytes.</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.ChiptuningAiClient">
+             <summary>
+             Main entry point for the Chiptuning.Ai API.
+             </summary>
+             <example>
+             <code>
+             var client = new ChiptuningAiClient();
+             await client.Auth.LoginAsync("you@example.com", "password");
+            
+             var file = await client.Files.UploadAsync("ecu.bin", new FileMetadata
+             {
+                 VehicleClass   = "Passenger Car",
+                 VehicleMake    = "BMW",
+                 VehicleModel   = "3 Series",
+                 VehicleVariant = "320i",
+                 EngineType     = "Diesel",
+                 ECUType        = "ECU",
+                 ECUMake        = "Bosch",
+                 ECUModel       = "EDC17C64",
+                 ReadHardware   = "CMD Flash",
+                 ReadMode       = "OBD",
+             });
+            
+             var patch = await client.Patches.UploadAsync("ecu_tuned.bin", file.FileId, description: "Stage 1");
+             var result = await client.Patches.ApplyAsync(patch.PatchId, file.FileId);
+             </code>
+             </example>
+        </member>
+        <member name="P:ChiptuningAi.Client.ChiptuningAiClient.AccessToken">
+            <summary>Current access token, or null if not authenticated.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.ChiptuningAiClient.RefreshToken">
+            <summary>Current refresh token, or null if not authenticated.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.ChiptuningAiClient.TokenExpiresAt">
+            <summary>UTC time when the current access token expires, or null if unknown.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.ChiptuningAiClient.Auth">
+            <summary>Authentication operations — login, refresh, logout, profile.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.ChiptuningAiClient.Files">
+            <summary>File upload and management operations.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.ChiptuningAiClient.Patches">
+            <summary>Patch creation, application, and history operations.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.ChiptuningAiClient.Lookups">
+            <summary>Autocomplete lookup values — vehicle classes, ECU makes/models, etc.</summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.ChiptuningAiClient.#ctor(System.String)">
+            <summary>
+            Creates a new Chiptuning.Ai client.
+            </summary>
+            <param name="baseUrl">
+            Base URL of the API. Defaults to <c>https://chiptuning-api.azurewebsites.net</c>.
+            Override for self-hosted or staging environments.
+            </param>
+        </member>
+        <member name="M:ChiptuningAi.Client.ChiptuningAiClient.FromToken(System.String,System.String,System.String)">
+            <summary>
+            Creates a client pre-loaded with an existing access token.
+            Use this if you store tokens between sessions.
+            </summary>
+            <param name="accessToken">A valid JWT access token.</param>
+            <param name="refreshToken">The corresponding refresh token.</param>
+            <param name="baseUrl">Base URL of the API.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.ChiptuningAiClient.FromToken(System.String,System.String,System.String,System.Nullable{System.DateTimeOffset})">
+            <summary>
+            Creates a client pre-loaded with an existing access token and a known expiry time.
+            Use this when restoring a persisted session so the refresh timer schedules correctly.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.ChiptuningAiClient.GetBinaryAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            GETs a resource and returns the raw response bytes (for binary file downloads).
+            Throws <see cref="T:ChiptuningAi.Client.Common.ApiException"/> if the server returns a non-success status.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.ChiptuningAiClient.PostFormBinaryAsync(System.String,System.Net.Http.MultipartFormDataContent,System.Threading.CancellationToken)">
+            <summary>
+            POSTs multipart form data and returns the raw response bytes (for binary file downloads).
+            Throws <see cref="T:ChiptuningAi.Client.Common.ApiException"/> if the server returns a non-success status.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.ChiptuningAiClient.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:ChiptuningAi.Client.Common.ApiException">
+            <summary>
+            Thrown when the Chiptuning.Ai API returns a non-success response.
+            Check <see cref="P:ChiptuningAi.Client.Common.ApiException.ErrorCode"/> for the machine-readable reason.
+            </summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Common.ApiException.ErrorCode">
+            <summary>Machine-readable error code returned by the API (e.g. <c>FILE_NOT_FOUND</c>).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Common.ApiException.StatusCode">
+            <summary>HTTP status code of the failed response.</summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Common.ApiException.#ctor(System.String,System.String,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="T:ChiptuningAi.Client.Common.DailyLimitExceededException">
+            <summary>
+            Thrown when <c>POST /api/patches/apply</c> returns HTTP 429 because the
+            account's daily patch-apply quota has been exhausted.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Common.DailyLimitExceededException.#ctor">
+            <inheritdoc/>
+        </member>
+        <member name="T:ChiptuningAi.Client.Common.ApiResponse`1">
+            <summary>Represents the standard JSON envelope returned by every Chiptuning.Ai API endpoint.</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Common.PagedResult`1">
+            <summary>Paged result wrapper returned by list endpoints.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Common.PagedResult`1.Items">
+            <summary>Items in the current page.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Common.PagedResult`1.Total">
+            <summary>Total number of records matching the query.</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Files.FileMetadata">
+            <summary>
+            Metadata describing the vehicle and controller for an ECU file upload.
+            Required fields must be provided; optional fields can be left null.
+            </summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.VehicleClass">
+            <summary>Vehicle class (e.g. <c>Passenger Car</c>, <c>Truck</c>). Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.VehicleMake">
+            <summary>Vehicle manufacturer (e.g. <c>BMW</c>). Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.VehicleModel">
+            <summary>Vehicle model (e.g. <c>3 Series</c>). Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.VehicleVariant">
+            <summary>Vehicle variant (e.g. <c>320i</c>). Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.EngineType">
+            <summary>Fuel type: <c>Petrol</c> or <c>Diesel</c>. Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.ECUType">
+            <summary>Controller type: <c>ECU</c>, <c>TCU</c>, or <c>CPC</c>. Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.ECUMake">
+            <summary>Controller manufacturer (e.g. <c>Bosch</c>). Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.ECUModel">
+            <summary>Controller model (e.g. <c>EDC17C64</c>). Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.ReadHardware">
+            <summary>Tool used to read the controller (e.g. <c>CMD Flash</c>, <c>Alientech KESS3</c>). Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.ReadMode">
+            <summary>Read method: <c>OBD</c>, <c>Bench</c>, or <c>Boot</c>. Required.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.ControllerHWNumber">
+            <summary>Controller hardware number (optional).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.ControllerSWNumber">
+            <summary>Controller software number (optional).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.EngineCode">
+            <summary>Engine code (e.g. <c>N57D30</c>). Optional.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.VIN">
+            <summary>Vehicle identification number. Optional.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.PowerOutput">
+            <summary>Stock power output in kW. Optional.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileMetadata.TorqueOutput">
+            <summary>Stock torque output in Nm. Optional.</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Files.FileUploadResult">
+            <summary>Result returned after a successful file upload.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileUploadResult.FileId">
+            <summary>Unique identifier for the uploaded file. Store this to create patches later.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileUploadResult.FileName">
+            <summary>Original file name.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileUploadResult.FileSize">
+            <summary>File size in bytes.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileUploadResult.Hash">
+            <summary>SHA-256 hash of the file content.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileUploadResult.MD5">
+            <summary>MD5 hash of the file content.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileUploadResult.IsDuplicate">
+            <summary>
+            True if this file was already uploaded previously.
+            The existing record is returned instead of creating a duplicate.
+            </summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileUploadResult.UploadedAt">
+            <summary>Date and time the file was uploaded (UTC).</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Files.FileDetails">
+            <summary>Detailed file information returned by get and list endpoints.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.FileId">
+            <summary>Unique file identifier.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.FileName">
+            <summary>Original file name.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.FileSize">
+            <summary>File size in bytes.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.Hash">
+            <summary>SHA-256 hash.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.MD5">
+            <summary>MD5 hash.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.VehicleClass">
+            <summary>Vehicle class.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.VehicleMake">
+            <summary>Vehicle manufacturer.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.VehicleModel">
+            <summary>Vehicle model.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.VehicleVariant">
+            <summary>Vehicle variant.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.EngineType">
+            <summary>Fuel type.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ECUType">
+            <summary>Controller type (ECU/TCU/CPC).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ECUMake">
+            <summary>Controller manufacturer.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ECUModel">
+            <summary>Controller model.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ReadHardware">
+            <summary>Read hardware tool.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ReadMode">
+            <summary>Read mode (OBD/Bench/Boot).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ControllerHWNumber">
+            <summary>Controller hardware number.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ControllerSWNumber">
+            <summary>Controller software number.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.EngineCode">
+            <summary>Engine code.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.VIN">
+            <summary>Vehicle identification number.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.PowerOutput">
+            <summary>Stock power output in kW.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.TorqueOutput">
+            <summary>Stock torque output in Nm.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.PatchCount">
+            <summary>Number of patches created against this file.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.UploadedAt">
+            <summary>Date and time the file was uploaded (UTC).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.UploadedBy">
+            <summary>User ID of the uploader.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.UploadedByEmail">
+            <summary>Email address of the uploader (populated on detail fetch only).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.ChunkHashes">
+            <summary>MD5 chunk hashes used for similarity matching (populated on detail fetch only).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.FileDetails.IsOwner">
+            <summary>True when the authenticated caller owns this file.</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Files.UpdateFileRequest">
+            <summary>Editable metadata fields for an existing file.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.VehicleClass">
+            <summary>Vehicle class (e.g. Car, Truck).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.VehicleMake">
+            <summary>Vehicle manufacturer (e.g. BMW, Volkswagen).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.VehicleModel">
+            <summary>Vehicle model (e.g. 3 Series, Golf).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.VehicleVariant">
+            <summary>Vehicle variant or trim level.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.EngineType">
+            <summary>Engine type or displacement (e.g. 2.0 TDI).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.ECUType">
+            <summary>ECU type or family (e.g. EDC17).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.ECUMake">
+            <summary>ECU manufacturer.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.ECUModel">
+            <summary>ECU model or part number.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.ReadHardware">
+            <summary>Hardware tool used to read the ECU (e.g. Alientech KESS3).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.ReadMode">
+            <summary>Read method used (e.g. OBD, Boot).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.ControllerHWNumber">
+            <summary>Controller hardware version number (optional).</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.UpdateFileRequest.ControllerSWNumber">
+            <summary>Controller software version number (optional).</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Files.SimilarFile">
+            <summary>A file match returned by the similarity search endpoint.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.SimilarFile.FileId">
+            <summary>File identifier of the matched parent file.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.SimilarFile.FileName">
+            <summary>File name.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.SimilarFile.JaccardScore">
+            <summary>Jaccard similarity score between 0.0 and 1.0.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Files.SimilarFile.MatchPercentage">
+            <summary>Human-readable match percentage (e.g. "87.5%").</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Files.FilesClient">
+            <summary>
+            Operations for uploading and managing ECU files.
+            Access via <see cref="P:ChiptuningAi.Client.ChiptuningAiClient.Files"/>.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.UploadAsync(System.String,ChiptuningAi.Client.Files.FileMetadata,System.IProgress{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+            Uploads an ECU file. Automatically uses chunked upload for files larger than 20 MB.
+            </summary>
+            <param name="filePath">Full path to the ECU file on disk.</param>
+            <param name="metadata">Vehicle and controller metadata to associate with the file.</param>
+            <param name="progress">
+            Optional progress callback. Receives a value from 0 to 100 during chunked uploads.
+            Not reported for single uploads.
+            </param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The uploaded file result including the <see cref="P:ChiptuningAi.Client.Files.FileUploadResult.FileId"/> needed to create patches.</returns>
+            <exception cref="T:System.IO.FileNotFoundException">Thrown if the file does not exist at <paramref name="filePath"/>.</exception>
+            <exception cref="T:ChiptuningAi.Client.Common.ApiException">Thrown if the API rejects the upload.</exception>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.GetAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Retrieves details for a specific file by ID.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.GetByHashAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Looks up a file by its MD5 hash (exact match). Returns null if not found.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.ListAsync(System.String,System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Lists files filtered by controller make and model.
+            </summary>
+            <param name="ecuMake">Controller manufacturer to filter by (e.g. <c>Bosch</c>).</param>
+            <param name="ecuModel">Controller model to filter by (e.g. <c>EDC17C64</c>).</param>
+            <param name="skip">Number of records to skip (for pagination).</param>
+            <param name="take">Number of records to return. Maximum 100.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.FindSimilarAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Finds files similar to the provided ECU file using Jaccard similarity on 4 KB MD5 chunks.
+            Useful for finding tuned versions of the same base file.
+            </summary>
+            <param name="filePath">Path to the file to compare against.</param>
+            <param name="ecuMake">Limit search to this controller manufacturer. Omitted when null or empty.</param>
+            <param name="ecuModel">Limit search to this controller model. Omitted when null or empty.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>List of similar files ordered by descending similarity score.</returns>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.DownloadAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Downloads the original ECU binary for a file and returns its raw bytes.
+            </summary>
+            <param name="fileId">The file identifier.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.UpdateAsync(System.Guid,ChiptuningAi.Client.Files.UpdateFileRequest,System.Threading.CancellationToken)">
+            <summary>
+            Updates editable metadata for a file (vehicle, ECU, read info).
+            </summary>
+            <param name="fileId">The file identifier to update.</param>
+            <param name="request">New metadata values.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Files.FilesClient.DeleteAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Soft-deletes a file. The file is hidden immediately and permanently purged after 30 days.
+            </summary>
+            <param name="fileId">The file identifier to delete.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:ChiptuningAi.Client.Lookups.LookupsClient">
+            <summary>
+            Retrieves autocomplete lookup values.
+            No authentication required by the server, but the standard auth header is sent when a token is available.
+            Access via <see cref="P:ChiptuningAi.Client.ChiptuningAiClient.Lookups"/>.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Lookups.LookupsClient.GetAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Returns all active values for the given lookup type.
+            Valid types: VehicleClass, VehicleMake, VehicleModel, EngineType, ECUType, ECUMake, ECUModel, ReadHardware, ReadMode.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Lookups.LookupsClient.GetCascadeAsync(System.String,System.String,System.String,System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Returns distinct field values from actual uploaded files, filtered by parent field selections.
+            Use this to implement cascade dropdowns.
+            Supported fields: VehicleMake, VehicleModel, VehicleVariant, ECUMake, ECUModel.
+            </summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Patches.PatchesClient">
+            <summary>
+            Operations for creating and applying ECU patches.
+            Access via <see cref="P:ChiptuningAi.Client.ChiptuningAiClient.Patches"/>.
+            </summary>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.UploadAsync(System.String,System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Uploads a modified ECU file to generate a binary patch against its original parent.
+            </summary>
+            <param name="modifiedFilePath">
+            Path to the tuned/modified ECU file. The API computes the binary diff
+            between this file and the original identified by <paramref name="parentFileId"/>.
+            </param>
+            <param name="parentFileId">
+            File ID of the original (unmodified) ECU file. Must have been uploaded
+            with <see cref="M:ChiptuningAi.Client.Files.FilesClient.UploadAsync(System.String,ChiptuningAi.Client.Files.FileMetadata,System.IProgress{System.Int32},System.Threading.CancellationToken)"/> first.
+            </param>
+            <param name="description">Optional human-readable description of the changes (e.g. <c>Stage 1 — +30 hp</c>).</param>
+            <param name="version">Optional version label (e.g. <c>v1.0</c>).</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The created patch including its <see cref="P:ChiptuningAi.Client.Patches.PatchUploadResult.PatchId"/>.</returns>
+            <exception cref="T:System.IO.FileNotFoundException">Thrown if the modified file does not exist.</exception>
+            <exception cref="T:ChiptuningAi.Client.Common.ApiException">Thrown if the API rejects the request.</exception>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.ApplyAsync(System.Guid,System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Applies a patch to a source ECU file and returns the patched output file.
+            Each application counts against your daily plan quota.
+            </summary>
+            <param name="patchId">The patch to apply.</param>
+            <param name="sourceFileId">The source ECU file to apply the patch to.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The result containing the output <see cref="P:ChiptuningAi.Client.Patches.ApplyPatchResult.ResultFileId"/>.</returns>
+            <exception cref="T:ChiptuningAi.Client.Common.DailyLimitExceededException">
+            Thrown when the account's daily patch-apply quota has been exhausted.
+            </exception>
+            <exception cref="T:ChiptuningAi.Client.Common.ApiException">Thrown if the API rejects the request.</exception>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.ListAsync(System.Guid,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Lists all patches created against a specific parent file.
+            </summary>
+            <param name="parentFileId">The parent file ID to list patches for.</param>
+            <param name="skip">Pagination offset.</param>
+            <param name="take">Page size, maximum 100.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.GetAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Returns details for a specific patch.
+            </summary>
+            <param name="patchId">The patch identifier.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.GetHistoryAsync(System.Guid,System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Returns the patch application history for a file — every time a patch was applied to it.
+            </summary>
+            <param name="fileId">The file to get history for.</param>
+            <param name="skip">Pagination offset.</param>
+            <param name="take">Page size, maximum 100.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.UpdateAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>Updates the description and/or version label of an existing patch.</summary>
+            <param name="patchId">The patch identifier to update.</param>
+            <param name="description">New description, or null to clear.</param>
+            <param name="version">New version label, or null to clear.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.DeleteAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>Permanently deletes a patch.</summary>
+            <param name="patchId">The patch identifier to delete.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.ProcessAsync(System.String,System.Collections.Generic.IReadOnlyList{System.Guid},System.Boolean,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Applies multiple patches to a raw ECU file and returns the processed binary.
+            Patches may come from different parent files; they are applied in the order given.
+            The file is not stored — the result is streamed back directly.
+            </summary>
+            <param name="filePath">Path to the raw ECU binary to process.</param>
+            <param name="patchIds">Ordered list of patch IDs to apply (sort by similarity before calling).</param>
+            <param name="bypassIntegrity">Skip the integrity check against the base file.</param>
+            <param name="bypassReason">Optional reason logged server-side when bypassing.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Processed binary bytes.</returns>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.DetectAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Detects which patches for a parent file are already applied, not applied, or conflicted
+            in the supplied ECU binary. Returns one result per active patch with metadata and state.
+            </summary>
+            <param name="parentFileId">Parent file whose patches to check against.</param>
+            <param name="filePath">Path to the ECU binary to inspect.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:ChiptuningAi.Client.Patches.PatchesClient.GenerateAsync(System.String,System.Guid,System.Collections.Generic.IReadOnlyList{ChiptuningAi.Client.Patches.PatchClientAction},System.Threading.CancellationToken)">
+            <summary>
+            Applies, removes, or skips patches on a source ECU file per explicit per-patch actions.
+            Apply writes the solution bytes; Remove restores the original master bytes back.
+            The result binary is returned directly — not stored server-side.
+            </summary>
+            <param name="filePath">Source ECU binary to process.</param>
+            <param name="parentFileId">Parent file the patches belong to (used for audit).</param>
+            <param name="actions">Per-patch actions. Patches with action Skip are no-ops.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Processed binary bytes.</returns>
+        </member>
+        <member name="T:ChiptuningAi.Client.Patches.PatchUploadResult">
+            <summary>Result returned after a patch is created.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchUploadResult.PatchId">
+            <summary>Unique patch identifier. Store this to apply the patch to other files.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchUploadResult.FileSize">
+            <summary>Patch file size in bytes.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchUploadResult.Description">
+            <summary>Human-readable description of the patch changes.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchUploadResult.Version">
+            <summary>Version label (e.g. <c>v1.2</c>).</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Patches.PatchDetails">
+            <summary>Detailed patch information.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchDetails.PatchId">
+            <summary>Unique patch identifier.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchDetails.Description">
+            <summary>Description of the changes in this patch.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchDetails.Version">
+            <summary>Version label.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchDetails.FileSize">
+            <summary>Patch file size in bytes.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchDetails.IsActive">
+            <summary>Whether the patch is currently active.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchDetails.CreatedAt">
+            <summary>Date and time the patch was created (UTC).</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Patches.ApplyPatchResult">
+            <summary>Result returned after successfully applying a patch.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.ApplyPatchResult.ResultFileId">
+            <summary>File ID of the patched output file.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.ApplyPatchResult.AppliedAt">
+            <summary>Date and time the patch was applied (UTC).</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Patches.PatchHistoryEntry">
+            <summary>A single entry in a file's patch application history.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchHistoryEntry.PatchId">
+            <summary>The patch that was applied.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchHistoryEntry.ResultFileId">
+            <summary>The output file produced.</summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchHistoryEntry.AppliedAt">
+            <summary>When the patch was applied (UTC).</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Patches.PatchDetectionResult">
+            <summary>
+            Detection result for one patch against a user-supplied ECU file.
+            Returned by <see cref="M:ChiptuningAi.Client.Patches.PatchesClient.DetectAsync(System.Guid,System.String,System.Threading.CancellationToken)"/>.
+            </summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchDetectionResult.State">
+            <summary>"Applied", "NotApplied", or "Conflict"</summary>
+        </member>
+        <member name="T:ChiptuningAi.Client.Patches.PatchClientAction">
+            <summary>
+            Per-patch action for <see cref="M:ChiptuningAi.Client.Patches.PatchesClient.GenerateAsync(System.String,System.Guid,System.Collections.Generic.IReadOnlyList{ChiptuningAi.Client.Patches.PatchClientAction},System.Threading.CancellationToken)"/>.
+            </summary>
+        </member>
+        <member name="P:ChiptuningAi.Client.Patches.PatchClientAction.Action">
+            <summary>"Apply", "Remove", or "Skip"</summary>
+        </member>
+    </members>
+</doc>

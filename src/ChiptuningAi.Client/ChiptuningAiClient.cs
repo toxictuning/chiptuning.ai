@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChiptuningAi.Client.Auth;
+using ChiptuningAi.Client.BulkImport;
 using ChiptuningAi.Client.Common;
 using ChiptuningAi.Client.Files;
 using ChiptuningAi.Client.Lookups;
@@ -72,6 +73,9 @@ public sealed class ChiptuningAiClient : IDisposable
     /// <summary>Autocomplete lookup values — vehicle classes, ECU makes/models, etc.</summary>
     public LookupsClient Lookups { get; }
 
+    /// <summary>Bulk ECU file import (Business tier only).</summary>
+    public BulkImportClient BulkImport { get; }
+
     // ── Constructor ───────────────────────────────────────────────────────────
 
     /// <summary>
@@ -86,10 +90,11 @@ public sealed class ChiptuningAiClient : IDisposable
         _http = new HttpClient { BaseAddress = new Uri(baseUrl.TrimEnd('/') + '/') };
         _http.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
-        Auth    = new AuthClient(this);
-        Files   = new FilesClient(this);
-        Patches = new PatchesClient(this);
-        Lookups = new LookupsClient(this);
+        Auth       = new AuthClient(this);
+        Files      = new FilesClient(this);
+        Patches    = new PatchesClient(this);
+        Lookups    = new LookupsClient(this);
+        BulkImport = new BulkImportClient(this);
     }
 
     /// <summary>
