@@ -497,6 +497,10 @@ public partial class MainWindow : Window
             MatchWarningPanel.Visibility   = Visibility.Visible;
             MatchButtonsExact.Visibility   = Visibility.Collapsed;
             MatchButtonsPartial.Visibility = Visibility.Visible;
+
+            // Hide ADD when the best match is 100% — adding it would create a duplicate.
+            var topPct = rowList.FirstOrDefault()?.SimilarityPct ?? string.Empty;
+            MatchAddBtn.Visibility = topPct.StartsWith("100") ? Visibility.Collapsed : Visibility.Visible;
         }
 
         DropSearching.Visibility    = Visibility.Collapsed;

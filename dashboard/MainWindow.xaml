@@ -202,7 +202,7 @@
                                     <Border x:Name="BulkImportTierBadge"
                                             Background="{DynamicResource GhostButtonBg}"
                                             Padding="4,1" VerticalAlignment="Center">
-                                        <TextBlock Text="BUSINESS" FontSize="8" FontWeight="Bold"
+                                        <TextBlock Text="BIZ" FontSize="8" FontWeight="Bold"
                                                    Foreground="{DynamicResource TextSecondary}"
                                                    VerticalAlignment="Center"/>
                                     </Border>
@@ -741,7 +741,8 @@
                             <Button Content="{DynamicResource Match.Cancel}"
                                     Style="{StaticResource GhostButton}"
                                     Margin="0,0,8,0" Click="MatchClose_Click"/>
-                            <Button Content="{DynamicResource Match.Add}"
+                            <Button x:Name="MatchAddBtn"
+                                    Content="{DynamicResource Match.Add}"
                                     Style="{StaticResource GhostButton}"
                                     Margin="0,0,8,0" Click="MatchAdd_Click"/>
                             <Button Content="{DynamicResource Match.Use}"
