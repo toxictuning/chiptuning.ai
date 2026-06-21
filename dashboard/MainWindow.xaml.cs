@@ -118,8 +118,9 @@ public partial class MainWindow : Window
             }
             catch (Exception ex)
             {
-                AppLogger.Error("Token refresh failed", ex);
+                var code = AppLogger.Error("Token refresh failed", ex);
                 SessionStore.Clear();
+                ShowToast($"Session expired ({code})", "✕");
                 new LoginWindow().Show();
                 Close();
             }
@@ -465,9 +466,9 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AppLogger.Error($"Drop search failed for '{Path.GetFileName(filePath)}'", ex);
+            var code = AppLogger.Error($"Drop search failed for '{Path.GetFileName(filePath)}'", ex);
             ResetDropZone();
-            ShowToast($"Search failed: {ex.Message}", "✕");
+            ShowToast($"Search failed ({code})", "✕");
         }
     }
 
@@ -633,9 +634,9 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AppLogger.Error("LoadFiles failed", ex);
-            FilesStatus.Text = $"Error: {ex.Message}";
-            ShowToast($"Failed to load files: {ex.Message}", "✕");
+            var code = AppLogger.Error("LoadFiles failed", ex);
+            FilesStatus.Text = $"Failed to load files ({code})";
+            ShowToast($"Failed to load files ({code})", "✕");
         }
         finally
         {
@@ -671,8 +672,8 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AppLogger.Error($"Delete file {fileId} failed", ex);
-            ShowToast($"Delete failed: {ex.Message}", "✕");
+            var code = AppLogger.Error($"Delete file {fileId} failed", ex);
+            ShowToast($"Delete failed ({code})", "✕");
         }
     }
 
@@ -702,8 +703,8 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AppLogger.Error($"Download file {fileId} failed", ex);
-            ShowToast($"Download failed: {ex.Message}", "✕");
+            var code = AppLogger.Error($"Download file {fileId} failed", ex);
+            ShowToast($"Download failed ({code})", "✕");
         }
     }
 
@@ -724,8 +725,8 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AppLogger.Error("Failed to open log file", ex);
-            ShowToast($"Could not open log: {path}", "✕");
+            var code = AppLogger.Error("Failed to open log file", ex);
+            ShowToast($"Could not open log ({code})", "✕");
         }
     }
 
@@ -803,9 +804,9 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AppLogger.Error($"Upload failed for '{Path.GetFileName(UploadFilePath.Text)}'", ex);
-            UploadStatus.Text = "Upload failed. Check the log for details.";
-            ShowToast("Upload failed.", "✕");
+            var code = AppLogger.Error($"Upload failed for '{Path.GetFileName(UploadFilePath.Text)}'", ex);
+            UploadStatus.Text = $"Upload failed ({code})";
+            ShowToast($"Upload failed ({code})", "✕");
         }
         finally
         {
@@ -1067,10 +1068,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            AppLogger.Error("Bulk parse failed", ex);
-            ShowToast($"Parse failed: {ex.Message}", "✕");
-            BulkSummaryText.Text = "Parse failed.";
-            WriteBulkLog($"Error: {ex.Message}");
+            var code = AppLogger.Error("Bulk parse failed", ex);
+            ShowToast($"Parse failed ({code})", "✕");
+            BulkSummaryText.Text = $"Parse failed ({code})";
+            WriteBulkLog($"Parse error — ref {code}");
         }
         finally
         {
@@ -1114,16 +1115,16 @@ public partial class MainWindow : Window
                 {
                     row.ImportStatus = "✗ Failed";
                     failed++;
-                    AppLogger.Error($"Bulk import rejected: {row.FileName} — {result.Error}");
-                    WriteBulkLog($"  ✗ {row.FileName}: {result.Error}");
+                    var rejCode = AppLogger.Error($"Bulk import rejected: {row.FileName} — {result.Error}");
+                    WriteBulkLog($"  ✗ {row.FileName} ({rejCode})");
                 }
             }
             catch (Exception ex)
             {
                 row.ImportStatus = "✗ Failed";
                 failed++;
-                AppLogger.Error($"Bulk import exception: {row.FileName}", ex);
-                WriteBulkLog($"  ✗ {row.FileName}: {ex.Message}");
+                var exCode = AppLogger.Error($"Bulk import exception: {row.FileName}", ex);
+                WriteBulkLog($"  ✗ {row.FileName} ({exCode})");
             }
 
             done++;

@@ -405,9 +405,15 @@ public partial class ProcessingWindow : Window
         catch (Exception ex)
         {
             StatusText.Foreground = new SolidColorBrush(Colors.OrangeRed);
-            StatusText.Text       = ex.Message.StartsWith("INTEGRITY_MISMATCH")
-                ? "Integrity check failed — enable bypass or select a better-matching parent."
-                : $"Error: {ex.Message}";
+            if (ex.Message.StartsWith("INTEGRITY_MISMATCH"))
+            {
+                StatusText.Text = "Integrity check failed — enable bypass or select a better-matching parent.";
+            }
+            else
+            {
+                var code = AppLogger.Error("ProcessingWindow apply failed", ex);
+                StatusText.Text = $"Error ({code})";
+            }
             ApplyBtn.IsEnabled = true;
         }
         finally

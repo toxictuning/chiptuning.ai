@@ -12,12 +12,28 @@ public static class AppLogger
 
     public static string LogPath => _logPath;
 
-    public static void Info(string message)  => Write("INFO ", message);
-    public static void Warn(string message)  => Write("WARN ", message);
-    public static void Error(string message, Exception? ex = null)
+    public static void Info(string message) => Write("INFO ", message);
+    public static void Warn(string message) => Write("WARN ", message);
+
+    /// <summary>
+    /// Logs the full exception (type, message, stack trace, inner exception) and returns a
+    /// short reference code the UI can show to the user instead of raw technical details.
+    /// Format: E-YYMMDD-HHmmss  (UTC, matches log timestamp for easy lookup)
+    /// </summary>
+    public static string Error(string message, Exception? ex = null)
     {
-        Write("ERROR", message);
-        if (ex is not null) Write("     ", $"{ex.GetType().Name}: {ex.Message}");
+        var code = $"E-{DateTime.UtcNow:yyMMdd-HHmmss}";
+        Write("ERROR", $"[{code}] {message}");
+        if (ex is not null)
+        {
+            Write("     ", $"[{code}] {ex.GetType().Name}: {ex.Message}");
+            if (ex.StackTrace is { } st)
+                foreach (var line in st.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                    Write("     ", $"[{code}]   {line.Trim()}");
+            if (ex.InnerException is { } inner)
+                Write("     ", $"[{code}] Inner: {inner.GetType().Name}: {inner.Message}");
+        }
+        return code;
     }
 
     private static void Write(string level, string message)
