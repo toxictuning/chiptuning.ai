@@ -155,7 +155,7 @@
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                                     Margin="0,0,0,8" Click="Nav_Click" Tag="DropZone">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE9C7;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                    <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                                Width="20" VerticalAlignment="Center"/>
                                     <TextBlock Text="{DynamicResource Nav.DropZone}" VerticalAlignment="Center"/>
                                 </StackPanel>
