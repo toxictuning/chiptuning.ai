@@ -15,8 +15,8 @@
     <sys:String x:Key="Drop.Subtitle">ì¼ì¹˜ ê²€ìƒ‰ì´ ìžë™ìœ¼ë¡œ ì‹¤í–‰ë©ë‹ˆë‹¤</sys:String>
     <sys:String x:Key="Drop.BrowseBtn">íŒŒì¼ ì°¾ê¸°</sys:String>
     <sys:String x:Key="Drop.StatusMd5">ì²´í¬ì„¬ ê³„ì‚° ì¤‘…</sys:String>
-    <sys:String x:Key="Drop.StatusHash">í•´ì‹œë¡œ ê²€ìƒ‰ ì¤‘…</sys:String>
-    <sys:String x:Key="Drop.StatusContent">ë‚´ìš©ìœ¼ë¡œ ê²€ìƒ‰ ì¤‘…</sys:String>
+    <sys:String x:Key="Drop.StatusHash">빠른 검색 중…</sys:String>
+    <sys:String x:Key="Drop.StatusContent">심층 검색 중…</sys:String>
     <sys:String x:Key="Match.Title">ì¼ì¹˜ íŒŒì¼ ë°œê²¬</sys:String>
     <sys:String x:Key="Match.SubtitleExact">ì´ íŒŒì¼ì€ ì´ë¯¸ ë°ì´í„°ë² ì´ìŠ¤ì— ìžˆìŠµë‹ˆë‹¤.</sys:String>
     <sys:String x:Key="Match.Cancel">ì·¨ì†Œ</sys:String>

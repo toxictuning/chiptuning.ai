@@ -93,7 +93,7 @@
 
                     <Label Content="API URL"/>
                     <TextBox x:Name="ApiUrlBox" Style="{StaticResource DarkTextBox}"
-                             Text="https://chiptuning-api.azurewebsites.net"
+                             Text="https://www.chiptuning.ai"
                              Margin="0,0,0,20"/>
 
                     <Label Content="EMAIL"/>

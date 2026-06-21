@@ -15,8 +15,8 @@
     <sys:String x:Key="Drop.Subtitle">La ricerca di corrispondenza si avvia automaticamente</sys:String>
     <sys:String x:Key="Drop.BrowseBtn">SFOGLIA</sys:String>
     <sys:String x:Key="Drop.StatusMd5">Calcolo checksum…</sys:String>
-    <sys:String x:Key="Drop.StatusHash">Ricerca per hash…</sys:String>
-    <sys:String x:Key="Drop.StatusContent">Ricerca per contenuto…</sys:String>
+    <sys:String x:Key="Drop.StatusHash">Ricerca rapida…</sys:String>
+    <sys:String x:Key="Drop.StatusContent">Ricerca approfondita…</sys:String>
     <sys:String x:Key="Match.Title">CORRISPONDENZA TROVATA</sys:String>
     <sys:String x:Key="Match.SubtitleExact">Questo file esiste giÃ  nel database.</sys:String>
     <sys:String x:Key="Match.Cancel">ANNULLA</sys:String>

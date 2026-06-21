@@ -82,10 +82,10 @@ public sealed class ChiptuningAiClient : IDisposable
     /// Creates a new Chiptuning.Ai client.
     /// </summary>
     /// <param name="baseUrl">
-    /// Base URL of the API. Defaults to <c>https://chiptuning-api.azurewebsites.net</c>.
+    /// Base URL of the API. Defaults to <c>https://www.chiptuning.ai</c>.
     /// Override for self-hosted or staging environments.
     /// </param>
-    public ChiptuningAiClient(string baseUrl = "https://chiptuning-api.azurewebsites.net")
+    public ChiptuningAiClient(string baseUrl = "https://www.chiptuning.ai")
     {
         _http = new HttpClient { BaseAddress = new Uri(baseUrl.TrimEnd('/') + '/') };
         _http.DefaultRequestHeaders.Accept.Add(
@@ -106,7 +106,7 @@ public sealed class ChiptuningAiClient : IDisposable
     /// <param name="baseUrl">Base URL of the API.</param>
     public static ChiptuningAiClient FromToken(
         string accessToken, string refreshToken,
-        string baseUrl = "https://chiptuning-api.azurewebsites.net")
+        string baseUrl = "https://www.chiptuning.ai")
     {
         var client = new ChiptuningAiClient(baseUrl);
         client.SetTokens(accessToken, refreshToken);

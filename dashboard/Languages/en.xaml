@@ -15,8 +15,8 @@
     <sys:String x:Key="Drop.Subtitle">Match search runs automatically — no inputs needed</sys:String>
     <sys:String x:Key="Drop.BrowseBtn">BROWSE FILE</sys:String>
     <sys:String x:Key="Drop.StatusMd5">Computing checksum…</sys:String>
-    <sys:String x:Key="Drop.StatusHash">Searching by hash…</sys:String>
-    <sys:String x:Key="Drop.StatusContent">Searching by content…</sys:String>
+    <sys:String x:Key="Drop.StatusHash">Quick Search…</sys:String>
+    <sys:String x:Key="Drop.StatusContent">Deep Search…</sys:String>
     <sys:String x:Key="Match.Title">FILE MATCH FOUND</sys:String>
     <sys:String x:Key="Match.SubtitleExact">This file already exists in the database.</sys:String>
     <sys:String x:Key="Match.Cancel">CANCEL</sys:String>

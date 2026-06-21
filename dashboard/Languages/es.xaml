@@ -15,8 +15,8 @@
     <sys:String x:Key="Drop.Subtitle">La bÃºsqueda de coincidencias se ejecuta automÃ¡ticamente</sys:String>
     <sys:String x:Key="Drop.BrowseBtn">EXAMINAR</sys:String>
     <sys:String x:Key="Drop.StatusMd5">Calculando suma de comprobaciÃ³n…</sys:String>
-    <sys:String x:Key="Drop.StatusHash">Buscando por hash…</sys:String>
-    <sys:String x:Key="Drop.StatusContent">Buscando por contenido…</sys:String>
+    <sys:String x:Key="Drop.StatusHash">Búsqueda rápida…</sys:String>
+    <sys:String x:Key="Drop.StatusContent">Búsqueda profunda…</sys:String>
     <sys:String x:Key="Match.Title">COINCIDENCIA ENCONTRADA</sys:String>
     <sys:String x:Key="Match.SubtitleExact">Este archivo ya existe en la base de datos.</sys:String>
     <sys:String x:Key="Match.Cancel">CANCELAR</sys:String>

@@ -15,8 +15,8 @@
     <sys:String x:Key="Drop.Subtitle">Overeenkomstzoeking wordt automatisch uitgevoerd</sys:String>
     <sys:String x:Key="Drop.BrowseBtn">BESTAND KIEZEN</sys:String>
     <sys:String x:Key="Drop.StatusMd5">Controlesom berekenen…</sys:String>
-    <sys:String x:Key="Drop.StatusHash">Zoeken op hash…</sys:String>
-    <sys:String x:Key="Drop.StatusContent">Zoeken op inhoud…</sys:String>
+    <sys:String x:Key="Drop.StatusHash">Snel zoeken…</sys:String>
+    <sys:String x:Key="Drop.StatusContent">Diep zoeken…</sys:String>
     <sys:String x:Key="Match.Title">OVEREENKOMST GEVONDEN</sys:String>
     <sys:String x:Key="Match.SubtitleExact">Dit bestand bestaat al in de database.</sys:String>
     <sys:String x:Key="Match.Cancel">ANNULEREN</sys:String>

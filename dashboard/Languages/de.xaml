@@ -15,8 +15,8 @@
     <sys:String x:Key="Drop.Subtitle">Ãœbereinstimmungssuche lÃ¤uft automatisch — keine Eingaben erforderlich</sys:String>
     <sys:String x:Key="Drop.BrowseBtn">DURCHSUCHEN</sys:String>
     <sys:String x:Key="Drop.StatusMd5">PrÃ¼fsumme berechnen…</sys:String>
-    <sys:String x:Key="Drop.StatusHash">Suche nach Hash…</sys:String>
-    <sys:String x:Key="Drop.StatusContent">Suche nach Inhalt…</sys:String>
+    <sys:String x:Key="Drop.StatusHash">Schnellsuche…</sys:String>
+    <sys:String x:Key="Drop.StatusContent">Tiefensuche…</sys:String>
     <sys:String x:Key="Match.Title">ÃœBEREINSTIMMUNG GEFUNDEN</sys:String>
     <sys:String x:Key="Match.SubtitleExact">Diese Datei existiert bereits in der Datenbank.</sys:String>
     <sys:String x:Key="Match.Cancel">ABBRECHEN</sys:String>

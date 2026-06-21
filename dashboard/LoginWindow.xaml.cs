@@ -92,12 +92,14 @@ public partial class LoginWindow : Window
         }
         catch (ApiException ex)
         {
-            ErrorText.Text       = ex.Message;
+            var code = AppLogger.Error("Login failed", ex);
+            ErrorText.Text       = $"Login failed. Please check your credentials. ({code})";
             ErrorText.Visibility = Visibility.Visible;
         }
         catch (Exception ex)
         {
-            ErrorText.Text       = $"Could not reach API: {ex.Message}";
+            var code = AppLogger.Error("Login connection error", ex);
+            ErrorText.Text       = $"Could not connect to the server. ({code})";
             ErrorText.Visibility = Visibility.Visible;
         }
         finally
