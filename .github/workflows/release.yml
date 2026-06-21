@@ -1,60 +1,38 @@
-name: Release Dashboard
+﻿name: Build & Release
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
 
 jobs:
-  build:
+  release:
     runs-on: windows-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: 8.x
 
-      - name: Restore
-        run: dotnet restore dashboard/ChiptuningAi.Dashboard.csproj
+      - name: Publish self-contained exe
+        run: dotnet publish dashboard/ChiptuningAi.Dashboard.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
 
-      - name: Publish (self-contained single-file exe)
-        run: >
-          dotnet publish dashboard/ChiptuningAi.Dashboard.csproj
-          --configuration Release
-          --runtime win-x64
-          --self-contained true
-          -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:EnableCompressionInSingleFile=true
-          -p:DebugType=none
-          --output publish/
-
-      - name: Rename exe to versioned name
+      - name: Rename output
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
-          $src = Get-ChildItem publish\*.exe | Select-Object -First 1
-          $dst = "publish\ChiptuningAi-Dashboard-$tag-win-x64.exe"
-          Move-Item $src.FullName $dst
-          Write-Host "Artifact: $dst"
+          Rename-Item -Path "publish\ChiptuningAi.Dashboard.exe" -NewName "ChiptuningAi-Dashboard-$tag-win-x64.exe"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: "Dashboard ${{ github.ref_name }}"
-          body: |
-            ## ChiptuningAi Dashboard ${{ github.ref_name }}
-
-            ### Installation
-            Download the `.exe` below — no installer needed, just run it.
-            Windows 10 / 11 x64 required.
-          files: publish/ChiptuningAi-Dashboard-${{ github.ref_name }}-win-x64.exe
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: false
+          generate_release_notes: true
+          files: publish/ChiptuningAi-Dashboard-${{ github.ref_name }}-win-x64.exe
