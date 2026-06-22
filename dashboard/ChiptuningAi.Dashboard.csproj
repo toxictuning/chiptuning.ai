@@ -6,10 +6,13 @@
 
   <ItemGroup>
     <Resource Include="Fonts\Jura-VariableFont_wght.ttf" />
+    <Resource Include="Resources\logo.png" />
+    <Resource Include="Resources\logo.ico" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
