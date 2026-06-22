@@ -876,9 +876,18 @@ public partial class MainWindow : Window
             var cls  = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
             var make = MdVehicleMake.SelectedItem as string  ?? MdVehicleMake.Text;
             await ReloadLookupByContextAsync(MdVehicleModel, "VehicleModel", $"{cls}|{make}");
+            ClearAndReset(MdVehicleVariant);
         };
 
-        // VehicleVariant has no lookup table entry — it's a free-text field, no cascade needed
+        // Vehicle Model → load variants from lookup table filtered by class|make|model context
+        MdVehicleModel.SelectionChanged += async (_, e) =>
+        {
+            if (e.AddedItems.Count == 0) return;
+            var cls   = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
+            var make  = MdVehicleMake.SelectedItem as string  ?? MdVehicleMake.Text;
+            var model = MdVehicleModel.SelectedItem as string ?? MdVehicleModel.Text;
+            await ReloadLookupByContextAsync(MdVehicleVariant, "VehicleVariant", $"{cls}|{make}|{model}");
+        };
 
         // Cascade: ECU
         MdECUType.SelectionChanged += async (_, e) =>
