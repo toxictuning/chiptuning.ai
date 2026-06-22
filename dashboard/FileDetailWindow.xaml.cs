@@ -2,10 +2,12 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using ChiptuningAi.Client;
 using ChiptuningAi.Client.Files;
+using ChiptuningAi.Client.Patches;
 using ChiptuningAi.Dashboard.Services;
 using Microsoft.Win32;
 
@@ -14,6 +16,8 @@ namespace ChiptuningAi.Dashboard;
 file sealed class PatchRow : INotifyPropertyChanged
 {
     public Guid   PatchId            { get; init; }
+    public Guid   ParentFileId       { get; init; }
+    public string ParentFileName     { get; init; } = "";
     public string Description        { get; init; } = "";
     public string Version            { get; init; } = "";
     public string SizeKb             { get; init; } = "";
@@ -39,6 +43,10 @@ public partial class FileDetailWindow : Window
     private readonly string? _prefilledSourcePath;
     private readonly Guid _currentUserId;
 
+    // Multi-file USE mode: non-null when opened with aggregated similar files
+    private readonly IReadOnlyList<SimilarFile>? _similarFiles;
+
+    // Single-file constructor (Files list double-click, non-USE, or exact-match USE)
     public FileDetailWindow(ChiptuningAiClient client, Guid fileId, string? displayName = null, string? sourceFilePath = null, Guid currentUserId = default)
     {
         InitializeComponent();
@@ -51,6 +59,23 @@ public partial class FileDetailWindow : Window
         {
             if (_prefilledSourcePath is not null)
                 GenerateSourcePath.Text = _prefilledSourcePath;
+            await LoadAsync();
+        };
+    }
+
+    // Multi-file USE constructor: aggregates patches from all similar files
+    public FileDetailWindow(ChiptuningAiClient client, IReadOnlyList<SimilarFile> similarFiles, string sourceFilePath, Guid currentUserId = default)
+    {
+        InitializeComponent();
+        _client = client;
+        _similarFiles = similarFiles;
+        _fileId = similarFiles[0].FileId; // best match drives the sidebar
+        _prefilledSourcePath = sourceFilePath;
+        _currentUserId = currentUserId;
+        TitleText.Text = $"{similarFiles.Count} Similar Files";
+        Loaded += async (_, _) =>
+        {
+            GenerateSourcePath.Text = sourceFilePath;
             await LoadAsync();
         };
     }
@@ -162,9 +187,51 @@ public partial class FileDetailWindow : Window
         {
             List<PatchRow> rows;
 
-            if (_prefilledSourcePath is not null)
+            if (_prefilledSourcePath is not null && _similarFiles is not null)
             {
-                // USE mode: detect which patches are already applied in the user's file
+                // Multi-file USE mode: detect states across all similar files and merge
+                PatchesStatus.Text = "Detecting solutions across similar files…";
+                var allRows = new List<PatchRow>();
+                foreach (var sim in _similarFiles)
+                {
+                    try
+                    {
+                        var detected = await _client.Patches.DetectAsync(sim.FileId, _prefilledSourcePath);
+                        allRows.AddRange(detected.Select(p => new PatchRow
+                        {
+                            PatchId            = p.PatchId,
+                            ParentFileId       = sim.FileId,
+                            ParentFileName     = $"{sim.FileName}  ({sim.MatchPercentage})",
+                            Description        = p.Description ?? "(no description)",
+                            Version            = p.Version ?? "—",
+                            SizeKb             = $"{p.SizeKb:N1}",
+                            Created            = p.CreatedAt.ToString("dd MMM yyyy"),
+                            IsInitiallyApplied = p.State == "Applied",
+                            State              = p.State,
+                            IsApplied          = p.State == "Applied",
+                        }));
+                    }
+                    catch (Exception ex)
+                    {
+                        AppLogger.Error($"DetectAsync failed for {sim.FileId}", ex);
+                    }
+                }
+
+                if (allRows.Count == 0)
+                {
+                    PatchesStatus.Text = "No solutions found across similar files.";
+                    return;
+                }
+
+                var view = CollectionViewSource.GetDefaultView(allRows);
+                view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(PatchRow.ParentFileName)));
+                PatchesGrid.ItemsSource = view;
+                PatchesStatus.Text = $"{allRows.Count} solution(s) from {_similarFiles.Count} file(s)";
+                rows = allRows;
+            }
+            else if (_prefilledSourcePath is not null)
+            {
+                // Single-file USE mode: detect which patches are already applied
                 PatchesStatus.Text = "Detecting solution states…";
                 var detected = await _client.Patches.DetectAsync(f.FileId, _prefilledSourcePath);
                 if (detected.Count == 0)
@@ -175,6 +242,8 @@ public partial class FileDetailWindow : Window
                 rows = detected.Select(p => new PatchRow
                 {
                     PatchId            = p.PatchId,
+                    ParentFileId       = f.FileId,
+                    ParentFileName     = f.FileName,
                     Description        = p.Description ?? "(no description)",
                     Version            = p.Version ?? "—",
                     SizeKb             = $"{p.SizeKb:N1}",
@@ -183,6 +252,8 @@ public partial class FileDetailWindow : Window
                     State              = p.State,
                     IsApplied          = p.State == "Applied",
                 }).ToList();
+                PatchesGrid.ItemsSource = rows;
+                PatchesStatus.Text = $"{rows.Count} solution(s)";
             }
             else
             {
@@ -195,18 +266,17 @@ public partial class FileDetailWindow : Window
                 }
                 rows = page.Items.Select(p => new PatchRow
                 {
-                    PatchId     = p.PatchId,
-                    Description = p.Description ?? "(no description)",
-                    Version     = p.Version ?? "—",
-                    SizeKb      = $"{p.FileSize / 1024.0:N1}",
-                    Created     = p.CreatedAt.ToString("dd MMM yyyy"),
+                    PatchId        = p.PatchId,
+                    ParentFileId   = f.FileId,
+                    ParentFileName = f.FileName,
+                    Description    = p.Description ?? "(no description)",
+                    Version        = p.Version ?? "—",
+                    SizeKb         = $"{p.FileSize / 1024.0:N1}",
+                    Created        = p.CreatedAt.ToString("dd MMM yyyy"),
                 }).ToList();
+                PatchesGrid.ItemsSource = rows;
                 PatchesStatus.Text = $"{page.Total} solution(s)";
             }
-
-            PatchesGrid.ItemsSource = rows;
-            if (_prefilledSourcePath is not null)
-                PatchesStatus.Text = $"{rows.Count} solution(s)";
         }
         catch (Exception ex)
         {
@@ -336,33 +406,86 @@ public partial class FileDetailWindow : Window
             usingOriginal = true;
         }
 
-        var allRows = (PatchesGrid.ItemsSource as IEnumerable<PatchRow>)?.ToList() ?? [];
+        // Collect rows from the DataGrid — ICollectionView wraps them in multi-file mode
+        var allRows = new List<PatchRow>();
+        if (PatchesGrid.ItemsSource is System.ComponentModel.ICollectionView cv)
+            allRows.AddRange(cv.SourceCollection.Cast<PatchRow>());
+        else
+            allRows.AddRange((PatchesGrid.ItemsSource as IEnumerable<PatchRow>) ?? []);
 
-        // Build action list: Apply = toggle turned ON, Remove = toggle turned OFF (USE mode only)
-        var actionList = new List<ChiptuningAi.Client.Patches.PatchClientAction>();
         var applyDescriptions = new List<string>();
+        var applyCount  = 0;
+        var removeCount = 0;
 
+        // Multi-file mode: build MultiPatchClientAction list
+        if (_similarFiles is not null)
+        {
+            var multiActions = new List<MultiPatchClientAction>();
+            foreach (var row in allRows)
+            {
+                string action;
+                if (row.IsApplied && !row.IsInitiallyApplied)
+                {
+                    action = "Apply"; applyCount++; applyDescriptions.Add(row.Description);
+                }
+                else if (!row.IsApplied && row.IsInitiallyApplied)
+                { action = "Remove"; removeCount++; }
+                else action = "Skip";
+
+                multiActions.Add(new MultiPatchClientAction { ParentFileId = row.ParentFileId, PatchId = row.PatchId, Action = action });
+            }
+
+            if (applyCount + removeCount == 0)
+            {
+                GenerateStatus.Text = "Toggle at least one solution on or off before generating.";
+                return;
+            }
+
+            var prefix = System.IO.Path.GetFileNameWithoutExtension(_prefilledSourcePath ?? "");
+            var saveDlg = new SaveFileDialog
+            {
+                Title  = "Save generated file",
+                Filter = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
+                FileName         = BuildOutputFileName(applyDescriptions, sourcePath, usingOriginal, prefix),
+                InitialDirectory = usingOriginal ? "" : System.IO.Path.GetDirectoryName(sourcePath) ?? "",
+            };
+            if (saveDlg.ShowDialog() != true) return;
+
+            GenerateStatus.Text = BuildStatusText(applyCount, removeCount);
+            try
+            {
+                var result = await _client.Patches.GenerateMultiAsync(sourcePath, multiActions);
+                await File.WriteAllBytesAsync(saveDlg.FileName, result);
+                GenerateStatus.Text = string.Empty;
+                AppLogger.Info($"Generated (multi) {saveDlg.FileName} — {applyCount} applied, {removeCount} removed");
+                var genFolder = System.IO.Path.GetDirectoryName(saveDlg.FileName);
+                new SuccessDialog($"File generated!\n{System.IO.Path.GetFileName(saveDlg.FileName)}", genFolder) { Owner = this }.Show();
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("Generate (multi) failed", ex);
+                GenerateStatus.Text = "Generate failed — check the log.";
+            }
+            return;
+        }
+
+        // Single-file mode (original path)
+        var actionList = new List<PatchClientAction>();
         foreach (var row in allRows)
         {
             string action;
             if (row.IsApplied && !row.IsInitiallyApplied)
             {
-                action = "Apply";
-                applyDescriptions.Add(row.Description);
+                action = "Apply"; applyCount++; applyDescriptions.Add(row.Description);
             }
             else if (!row.IsApplied && row.IsInitiallyApplied)
-                action = "Remove";
-            else
-                action = "Skip";
+            { action = "Remove"; removeCount++; }
+            else action = "Skip";
 
-            actionList.Add(new ChiptuningAi.Client.Patches.PatchClientAction { PatchId = row.PatchId, Action = action });
+            actionList.Add(new PatchClientAction { PatchId = row.PatchId, Action = action });
         }
 
-        var nonSkipCount  = actionList.Count(a => a.Action != "Skip");
-        var applyCount    = actionList.Count(a => a.Action == "Apply");
-        var removeCount   = actionList.Count(a => a.Action == "Remove");
-
-        if (nonSkipCount == 0)
+        if (applyCount + removeCount == 0)
         {
             GenerateStatus.Text = _prefilledSourcePath is not null
                 ? "Toggle at least one solution on or off before generating."
@@ -370,19 +493,19 @@ public partial class FileDetailWindow : Window
             return;
         }
 
-        var prefix = _prefilledSourcePath is not null
+        var singlePrefix = _prefilledSourcePath is not null
             ? System.IO.Path.GetFileNameWithoutExtension(_prefilledSourcePath)
             : _loadedFile is not null ? BuildFilePrefix(_loadedFile) : null;
-        var suggestedName = BuildOutputFileName(applyDescriptions, sourcePath, usingOriginal, prefix);
+        var suggestedName = BuildOutputFileName(applyDescriptions, sourcePath, usingOriginal, singlePrefix);
 
-        var saveDlg = new SaveFileDialog
+        var singleSaveDlg = new SaveFileDialog
         {
             Title            = "Save generated file",
             Filter           = "Binary files (*.bin)|*.bin|All files (*.*)|*.*",
             FileName         = suggestedName,
             InitialDirectory = usingOriginal ? "" : System.IO.Path.GetDirectoryName(sourcePath) ?? "",
         };
-        if (saveDlg.ShowDialog() != true) return;
+        if (singleSaveDlg.ShowDialog() != true) return;
 
         GenerateStatus.Text = usingOriginal ? "Downloading original file…" : BuildStatusText(applyCount, removeCount);
         try
@@ -397,11 +520,11 @@ public partial class FileDetailWindow : Window
             }
 
             var result = await _client.Patches.GenerateAsync(sourcePath, _fileId, actionList);
-            await File.WriteAllBytesAsync(saveDlg.FileName, result);
+            await File.WriteAllBytesAsync(singleSaveDlg.FileName, result);
             GenerateStatus.Text = string.Empty;
-            AppLogger.Info($"Generated {saveDlg.FileName} — {applyCount} applied, {removeCount} removed");
-            var genFolder = System.IO.Path.GetDirectoryName(saveDlg.FileName);
-            new SuccessDialog($"File generated!\n{System.IO.Path.GetFileName(saveDlg.FileName)}", genFolder) { Owner = this }.Show();
+            AppLogger.Info($"Generated {singleSaveDlg.FileName} — {applyCount} applied, {removeCount} removed");
+            var genFolder = System.IO.Path.GetDirectoryName(singleSaveDlg.FileName);
+            new SuccessDialog($"File generated!\n{System.IO.Path.GetFileName(singleSaveDlg.FileName)}", genFolder) { Owner = this }.Show();
         }
         catch (Exception ex)
         {

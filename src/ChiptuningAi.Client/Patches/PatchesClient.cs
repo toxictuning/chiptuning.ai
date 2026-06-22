@@ -193,11 +193,6 @@ public sealed class PatchesClient
     /// Apply writes the solution bytes; Remove restores the original master bytes back.
     /// The result binary is returned directly — not stored server-side.
     /// </summary>
-    /// <param name="filePath">Source ECU binary to process.</param>
-    /// <param name="parentFileId">Parent file the patches belong to (used for audit).</param>
-    /// <param name="actions">Per-patch actions. Patches with action Skip are no-ops.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Processed binary bytes.</returns>
     public async Task<byte[]> GenerateAsync(
         string filePath,
         Guid parentFileId,
@@ -217,5 +212,28 @@ public sealed class PatchesClient
         form.Add(new StringContent(actionsJson), "actions");
 
         return await _client.PostFormBinaryAsync("/api/patches/generate", form, cancellationToken);
+    }
+
+    /// <summary>
+    /// Like <see cref="GenerateAsync"/> but accepts patches from multiple parent files.
+    /// Each action carries its own ParentFileId — used for aggregated similar-file USE mode.
+    /// </summary>
+    public async Task<byte[]> GenerateMultiAsync(
+        string filePath,
+        IReadOnlyList<MultiPatchClientAction> actions,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("ECU file not found.", filePath);
+
+        using var form = new MultipartFormDataContent();
+        var fileContent = new StreamContent(File.OpenRead(filePath));
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        form.Add(fileContent, "file", Path.GetFileName(filePath));
+        var actionsJson = System.Text.Json.JsonSerializer.Serialize(actions);
+        form.Add(new StringContent(actionsJson), "actions");
+
+        return await _client.PostFormBinaryAsync("/api/patches/generate-multi", form, cancellationToken);
     }
 }

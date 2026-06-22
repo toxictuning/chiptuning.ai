@@ -555,12 +555,24 @@ public partial class MainWindow : Window
 
     private void MatchUse_Click(object sender, RoutedEventArgs e)
     {
-        if (_droppedFilePath is null || _currentSimilarFiles.Count == 0) return;
+        if (_droppedFilePath is null) return;
         var filePath = _droppedFilePath;
-        var best     = _currentSimilarFiles[0];
         PanelMatchDialog.Visibility = Visibility.Collapsed;
         ResetDropZone();
-        var win = new FileDetailWindow(_client, best.FileId, best.FileName, sourceFilePath: filePath, currentUserId: _currentUserId);
+
+        FileDetailWindow win;
+        if (_matchIsExact || _currentSimilarFiles.Count == 0)
+        {
+            // 100% exact match: single-file USE — source file detected against the one DB record
+            if (MatchList.SelectedItem is not MatchRow row) return;
+            win = new FileDetailWindow(_client, row.FileId, row.FileName, sourceFilePath: filePath, currentUserId: _currentUserId);
+        }
+        else
+        {
+            // Similar matches: aggregate all similar files into one USE dialog
+            win = new FileDetailWindow(_client, _currentSimilarFiles, sourceFilePath: filePath, currentUserId: _currentUserId);
+        }
+
         win.Owner = this;
         win.Closed += (_, _) => Activate();
         win.Show();

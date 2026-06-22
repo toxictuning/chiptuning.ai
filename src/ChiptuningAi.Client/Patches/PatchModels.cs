@@ -91,3 +91,14 @@ public sealed class PatchClientAction
     /// <summary>"Apply", "Remove", or "Skip".</summary>
     public string Action  { get; init; } = "Skip";
 }
+
+/// <summary>
+/// Per-patch action for <see cref="PatchesClient.GenerateMultiAsync"/>.
+/// Carries a ParentFileId so patches from multiple similar files can be applied in one call.
+/// </summary>
+public sealed class MultiPatchClientAction
+{
+    public Guid   ParentFileId { get; init; }
+    public Guid   PatchId      { get; init; }
+    public string Action       { get; init; } = "Skip";
+}
