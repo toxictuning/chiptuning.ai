@@ -842,7 +842,6 @@ public partial class MainWindow : Window
         [
             ("VehicleClass", MdVehicleClass),
             ("EngineType",   MdEngineType),
-            ("ECUType",      MdECUType),
             ("ReadHardware", MdReadHardware),
             ("ReadMode",     MdReadMode),
         ];
@@ -889,21 +888,21 @@ public partial class MainWindow : Window
             await ReloadLookupByContextAsync(MdVehicleVariant, "VehicleVariant", $"{cls}|{make}|{model}");
         };
 
-        // Cascade: ECU
-        MdECUType.SelectionChanged += async (_, e) =>
-        {
-            if (e.AddedItems.Count == 0) return;
-            var type = MdECUType.SelectedItem as string ?? MdECUType.Text;
-            await ReloadCascadeAsync(MdECUMake, "ECUMake", ecuType: type);
-            ClearAndReset(MdECUModel);
-        };
-
+        // ECU: Make → Type (filtered by make) → Model (filtered by make|type)
         MdECUMake.SelectionChanged += async (_, e) =>
         {
             if (e.AddedItems.Count == 0) return;
-            var type = MdECUType.SelectedItem as string ?? MdECUType.Text;
             var make = MdECUMake.SelectedItem as string ?? MdECUMake.Text;
-            await ReloadCascadeAsync(MdECUModel, "ECUModel", ecuType: type, ecuMake: make);
+            await ReloadLookupByContextAsync(MdECUType, "ECUType", make);
+            ClearAndReset(MdECUModel);
+        };
+
+        MdECUType.SelectionChanged += async (_, e) =>
+        {
+            if (e.AddedItems.Count == 0) return;
+            var make = MdECUMake.SelectedItem as string ?? MdECUMake.Text;
+            var type = MdECUType.SelectedItem as string ?? MdECUType.Text;
+            await ReloadLookupByContextAsync(MdECUModel, "ECUModel", $"{make}|{type}");
         };
 
         } // end _lookupEventsWired
@@ -918,8 +917,15 @@ public partial class MainWindow : Window
 
         // VehicleModel is empty until the user picks a make (too many to show unfiltered)
         ClearAndReset(MdVehicleModel);
-        await ReloadCascadeAsync(MdECUMake,  "ECUMake");
-        await ReloadCascadeAsync(MdECUModel, "ECUModel");
+
+        // ECUMake from lookup table; ECUType and ECUModel are empty until Make is selected
+        try
+        {
+            var ecuMakes = (await _client.Lookups.GetAsync("ECUMake")).ToList();
+            AttachAutocomplete(MdECUMake, ecuMakes);
+        }
+        catch (Exception ex) { AppLogger.Error("Lookup load failed: ECUMake", ex); }
+        ClearAndReset(MdECUType, MdECUModel);
     }
 
     private async Task ReloadCascadeAsync(
