@@ -405,13 +405,14 @@ public partial class MainWindow : Window
             var trace = TraceFile.Load(tracePath);
             if (trace is not null)
             {
-                var answer = MessageBox.Show(
-                    $"A previous session log was found for this file.\n\nWould you like to continue from where you left off?",
-                    "Resume Session?",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                var resumeDlg = new ConfirmDialog(
+                    "A previous session log was found for this file.",
+                    "Would you like to continue from where you left off?",
+                    confirmLabel: "Resume Session") { Owner = this };
+                resumeDlg.ShowDialog();
+                var answer = resumeDlg.Confirmed;
 
-                if (answer == MessageBoxResult.Yes)
+                if (answer)
                 {
                     var win = new ProcessingWindow(_client, filePath, trace);
                     win.Owner = this;
@@ -673,10 +674,12 @@ public partial class MainWindow : Window
         var row  = (FilesGrid.ItemsSource as IEnumerable<FileRow>)?.FirstOrDefault(r => r.FileId == fileId);
         var name = row?.FileName ?? fileId.ToString();
 
-        var confirm = MessageBox.Show(
-            $"Delete '{name}'?\n\nAll associated solutions will also be removed.",
-            "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (confirm != MessageBoxResult.Yes) return;
+        var dlg = new ConfirmDialog(
+            $"Delete '{name}'?",
+            "All associated solutions will also be removed. This cannot be undone.",
+            isDanger: true, confirmLabel: "Delete") { Owner = this };
+        dlg.ShowDialog();
+        if (!dlg.Confirmed) return;
 
         try
         {

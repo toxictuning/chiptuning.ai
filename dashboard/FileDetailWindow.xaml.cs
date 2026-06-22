@@ -290,10 +290,12 @@ public partial class FileDetailWindow : Window
     {
         if (sender is not Button btn || btn.Tag is not Guid patchId) return;
 
-        var confirm = MessageBox.Show(
+        var dlg = new ConfirmDialog(
             "Permanently delete this solution?",
-            "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (confirm != MessageBoxResult.Yes) return;
+            "The patch data will be removed and cannot be recovered.",
+            isDanger: true, confirmLabel: "Delete") { Owner = this };
+        dlg.ShowDialog();
+        if (!dlg.Confirmed) return;
 
         try
         {
