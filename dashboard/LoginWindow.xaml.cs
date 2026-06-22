@@ -11,17 +11,15 @@ namespace ChiptuningAi.Dashboard;
 
 public partial class LoginWindow : Window
 {
+    private const string ApiUrl = "https://www.chiptuning.ai";
+
     public LoginWindow()
     {
         InitializeComponent();
 
-        // Pre-fill saved credentials
         var session = SessionStore.Load();
-        if (session != null)
-        {
-            if (!string.IsNullOrEmpty(session.ApiUrl))   ApiUrlBox.Text = session.ApiUrl;
-            if (!string.IsNullOrEmpty(session.Email))    EmailBox.Text  = session.Email;
-        }
+        if (session != null && !string.IsNullOrEmpty(session.Email))
+            EmailBox.Text = session.Email;
     }
 
     // ── Title bar ─────────────────────────────────────────────────────────────
@@ -76,17 +74,17 @@ public partial class LoginWindow : Window
 
         try
         {
-            var client = new ChiptuningAiClient(ApiUrlBox.Text.Trim());
+            var client = new ChiptuningAiClient(ApiUrl);
             await client.Auth.LoginAsync(EmailBox.Text.Trim(), PasswordBox.Password);
 
             SessionStore.Save(
-                ApiUrlBox.Text.Trim(),
+                ApiUrl,
                 EmailBox.Text.Trim(),
                 client.AccessToken  ?? string.Empty,
                 client.RefreshToken ?? string.Empty,
                 client.TokenExpiresAt);
 
-            var dashboard = new MainWindow(client, ApiUrlBox.Text.Trim(), EmailBox.Text.Trim());
+            var dashboard = new MainWindow(client, ApiUrl, EmailBox.Text.Trim());
             dashboard.Show();
             Close();
         }

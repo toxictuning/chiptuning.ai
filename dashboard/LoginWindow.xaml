@@ -91,11 +91,6 @@
                                Foreground="{DynamicResource TextSecondary}"
                                HorizontalAlignment="Center" Margin="0,0,0,36"/>
 
-                    <Label Content="API URL"/>
-                    <TextBox x:Name="ApiUrlBox" Style="{StaticResource DarkTextBox}"
-                             Text="https://www.chiptuning.ai"
-                             Margin="0,0,0,20"/>
-
                     <Label Content="EMAIL"/>
                     <TextBox x:Name="EmailBox" Style="{StaticResource DarkTextBox}"
                              Margin="0,0,0,20"/>
