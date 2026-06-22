@@ -820,6 +820,21 @@ public partial class MainWindow : Window
 
     // ── Lookups / autocomplete ────────────────────────────────────────────────
 
+    private async void RefreshLookups_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshLookupsBtn.IsEnabled = false;
+        RefreshLookupsBtn.Content   = "↻ Refreshing…";
+        try   { await LoadLookupsAsync(); ShowToast("Lookup lists refreshed", "✓"); }
+        catch { ShowToast("Failed to refresh lookups", "✕"); }
+        finally
+        {
+            RefreshLookupsBtn.IsEnabled = true;
+            RefreshLookupsBtn.Content   = "↻ Refresh lists";
+        }
+    }
+
+    private bool _lookupEventsWired = false;
+
     private async Task LoadLookupsAsync()
     {
         // Flat static lists (not cascade-dependent)
@@ -841,6 +856,11 @@ public partial class MainWindow : Window
             }
             catch (Exception ex) { AppLogger.Error($"Lookup load failed: {type}", ex); }
         }
+
+        // Wire cascade events only once — re-calling LoadLookupsAsync would stack duplicate handlers
+        if (!_lookupEventsWired)
+        {
+            _lookupEventsWired = true;
 
         // Cascade: Vehicle
         MdVehicleClass.SelectionChanged += async (_, e) =>
@@ -887,7 +907,9 @@ public partial class MainWindow : Window
             await ReloadCascadeAsync(MdECUModel, "ECUModel", ecuType: type, ecuMake: make);
         };
 
-        // Seed initial cascaded lists with all values (no filter yet)
+        } // end _lookupEventsWired
+
+        // Seed / refresh cascaded lists with all values (no filter yet)
         await ReloadCascadeAsync(MdVehicleMake,   "VehicleMake");
         await ReloadCascadeAsync(MdVehicleModel,  "VehicleModel");
         await ReloadCascadeAsync(MdVehicleVariant,"VehicleVariant");

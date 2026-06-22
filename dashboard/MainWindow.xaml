@@ -398,8 +398,19 @@
                     <ScrollViewer x:Name="PanelUpload" Visibility="Collapsed"
                                   VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <TextBlock Text="Upload File" FontSize="20" FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Upload File" FontSize="20" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                <Button x:Name="RefreshLookupsBtn" Grid.Column="1"
+                                        Content="↻ Refresh lists"
+                                        Style="{StaticResource GhostButton}"
+                                        ToolTip="Reload dropdown values from server"
+                                        Click="RefreshLookups_Click"/>
+                            </Grid>
                             <Border Background="{DynamicResource BgPanel}" Padding="24" Margin="0,0,0,0">
                             <StackPanel>
 
