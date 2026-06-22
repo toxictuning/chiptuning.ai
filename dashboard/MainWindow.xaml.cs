@@ -862,21 +862,20 @@ public partial class MainWindow : Window
         {
             _lookupEventsWired = true;
 
-        // Cascade: Vehicle
-        MdVehicleClass.SelectionChanged += async (_, e) =>
+        // Vehicle Class → clear dependent dropdowns (VehicleMake is from lookup table, not cascade)
+        MdVehicleClass.SelectionChanged += (_, e) =>
         {
             if (e.AddedItems.Count == 0) return;
-            var cls = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
-            await ReloadCascadeAsync(MdVehicleMake, "VehicleMake", vehicleClass: cls);
             ClearAndReset(MdVehicleModel, MdVehicleVariant);
         };
 
+        // Vehicle Make → load models from lookup table filtered by class|make context
         MdVehicleMake.SelectionChanged += async (_, e) =>
         {
             if (e.AddedItems.Count == 0) return;
             var cls  = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
-            var make = MdVehicleMake.SelectedItem as string ?? MdVehicleMake.Text;
-            await ReloadCascadeAsync(MdVehicleModel, "VehicleModel", vehicleClass: cls, vehicleMake: make);
+            var make = MdVehicleMake.SelectedItem as string  ?? MdVehicleMake.Text;
+            await ReloadLookupByContextAsync(MdVehicleModel, "VehicleModel", $"{cls}|{make}");
             ClearAndReset(MdVehicleVariant);
         };
 
@@ -909,9 +908,16 @@ public partial class MainWindow : Window
 
         } // end _lookupEventsWired
 
-        // Seed / refresh cascaded lists with all values (no filter yet)
-        await ReloadCascadeAsync(MdVehicleMake,   "VehicleMake");
-        await ReloadCascadeAsync(MdVehicleModel,  "VehicleModel");
+        // VehicleMake comes from the seeded lookup table (all makes, not just uploaded files)
+        try
+        {
+            var makes = (await _client.Lookups.GetAsync("VehicleMake")).ToList();
+            AttachAutocomplete(MdVehicleMake, makes);
+        }
+        catch (Exception ex) { AppLogger.Error("Lookup load failed: VehicleMake", ex); }
+
+        // VehicleModel is empty until the user picks a make (too many to show unfiltered)
+        ClearAndReset(MdVehicleModel);
         await ReloadCascadeAsync(MdVehicleVariant,"VehicleVariant");
         await ReloadCascadeAsync(MdECUMake,       "ECUMake");
         await ReloadCascadeAsync(MdECUModel,      "ECUModel");
@@ -930,6 +936,17 @@ public partial class MainWindow : Window
             AttachAutocomplete(cb, values);
         }
         catch (Exception ex) { AppLogger.Error($"Cascade load failed: {field}", ex); }
+    }
+
+    private async Task ReloadLookupByContextAsync(ComboBox cb, string type, string context)
+    {
+        try
+        {
+            var values = (await _client.Lookups.GetAsync(type, context)).ToList();
+            cb.Text = string.Empty;
+            AttachAutocomplete(cb, values);
+        }
+        catch (Exception ex) { AppLogger.Error($"Lookup load failed: {type} context={context}", ex); }
     }
 
     private static void ClearAndReset(params ComboBox[] combos)

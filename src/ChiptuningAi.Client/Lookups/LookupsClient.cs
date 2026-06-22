@@ -15,8 +15,13 @@ public sealed class LookupsClient
     /// Returns all active values for the given lookup type.
     /// Valid types: VehicleClass, VehicleMake, VehicleModel, EngineType, ECUType, ECUMake, ECUModel, ReadHardware, ReadMode.
     /// </summary>
-    public Task<string[]> GetAsync(string type, CancellationToken cancellationToken = default)
-        => _client.GetAsync<string[]>($"/api/lookups/{Uri.EscapeDataString(type)}", cancellationToken);
+    public Task<string[]> GetAsync(string type, string? context = null, CancellationToken cancellationToken = default)
+    {
+        var url = $"/api/lookups/{Uri.EscapeDataString(type)}";
+        if (!string.IsNullOrEmpty(context))
+            url += $"?context={Uri.EscapeDataString(context)}";
+        return _client.GetAsync<string[]>(url, cancellationToken);
+    }
 
     /// <summary>
     /// Returns distinct field values from actual uploaded files, filtered by parent field selections.
