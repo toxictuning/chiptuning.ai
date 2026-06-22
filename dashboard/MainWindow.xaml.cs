@@ -866,7 +866,7 @@ public partial class MainWindow : Window
         MdVehicleClass.SelectionChanged += (_, e) =>
         {
             if (e.AddedItems.Count == 0) return;
-            ClearAndReset(MdVehicleModel, MdVehicleVariant);
+            ClearAndReset(MdVehicleModel);
         };
 
         // Vehicle Make → load models from lookup table filtered by class|make context
@@ -876,18 +876,9 @@ public partial class MainWindow : Window
             var cls  = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
             var make = MdVehicleMake.SelectedItem as string  ?? MdVehicleMake.Text;
             await ReloadLookupByContextAsync(MdVehicleModel, "VehicleModel", $"{cls}|{make}");
-            ClearAndReset(MdVehicleVariant);
         };
 
-        MdVehicleModel.SelectionChanged += async (_, e) =>
-        {
-            if (e.AddedItems.Count == 0) return;
-            var cls   = MdVehicleClass.SelectedItem as string ?? MdVehicleClass.Text;
-            var make  = MdVehicleMake.SelectedItem as string  ?? MdVehicleMake.Text;
-            var model = MdVehicleModel.SelectedItem as string ?? MdVehicleModel.Text;
-            await ReloadCascadeAsync(MdVehicleVariant, "VehicleVariant",
-                vehicleClass: cls, vehicleMake: make, vehicleModel: model);
-        };
+        // VehicleVariant has no lookup table entry — it's a free-text field, no cascade needed
 
         // Cascade: ECU
         MdECUType.SelectionChanged += async (_, e) =>
@@ -918,9 +909,8 @@ public partial class MainWindow : Window
 
         // VehicleModel is empty until the user picks a make (too many to show unfiltered)
         ClearAndReset(MdVehicleModel);
-        await ReloadCascadeAsync(MdVehicleVariant,"VehicleVariant");
-        await ReloadCascadeAsync(MdECUMake,       "ECUMake");
-        await ReloadCascadeAsync(MdECUModel,      "ECUModel");
+        await ReloadCascadeAsync(MdECUMake,  "ECUMake");
+        await ReloadCascadeAsync(MdECUModel, "ECUModel");
     }
 
     private async Task ReloadCascadeAsync(
