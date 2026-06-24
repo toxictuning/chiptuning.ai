@@ -18,7 +18,7 @@
     <sys:String x:Key="Drop.StatusHash">Quick Search…</sys:String>
     <sys:String x:Key="Drop.StatusContent">Deep Search…</sys:String>
     <sys:String x:Key="Match.Title">FILE MATCH FOUND</sys:String>
-    <sys:String x:Key="Match.SubtitleExact">This file already exists in the database.</sys:String>
+    <sys:String x:Key="Match.SubtitleExact">This file already exists in the database. Use OPEN to view the master record, USE to apply patches to this file, or ADD to register it as a new entry.</sys:String>
     <sys:String x:Key="Match.Cancel">CANCEL</sys:String>
     <sys:String x:Key="Match.OpenFile">OPEN FILE</sys:String>
     <sys:String x:Key="Match.Add">ADD</sys:String>

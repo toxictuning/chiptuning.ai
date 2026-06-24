@@ -743,9 +743,14 @@
                             <Button Content="{DynamicResource Match.Cancel}"
                                     Style="{StaticResource GhostButton}"
                                     Margin="0,0,8,0" Click="MatchClose_Click"/>
+                            <Button Content="{DynamicResource Match.Use}"
+                                    Style="{StaticResource GhostButton}"
+                                    Margin="0,0,8,0" Click="MatchUse_Click"
+                                    ToolTip="Apply patches from all related files to this one"/>
                             <Button Content="{DynamicResource Match.OpenFile}"
                                     Style="{StaticResource AccentButton}"
-                                    Click="MatchOpen_Click"/>
+                                    Click="MatchOpen_Click"
+                                    ToolTip="Open the master record for this file"/>
                         </StackPanel>
 
                         <!-- Partial match buttons -->

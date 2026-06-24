@@ -437,6 +437,13 @@ public partial class MainWindow : Window
 
             if (exact is not null)
             {
+                // Also run similarity search so USE can aggregate patches from all related files (≥78%)
+                DropSearchStatus.Text = LanguageManager.Get("Drop.StatusContent");
+                IReadOnlyList<SimilarFile> exactSimilar;
+                try   { exactSimilar = await _client.Files.FindSimilarAsync(filePath); }
+                catch { exactSimilar = []; }
+                _currentSimilarFiles = exactSimilar;
+
                 ShowMatchDialog(filePath,
                 [
                     new MatchRow(exact.FileId, exact.FileName, "100% (exact)")
@@ -527,7 +534,7 @@ public partial class MainWindow : Window
         if (MatchList.SelectedItem is not MatchRow row) return;
         PanelMatchDialog.Visibility = Visibility.Collapsed;
         ResetDropZone();
-        OpenFileDetail(row.FileId, row.FileName);
+        OpenFileDetail(row.FileId, row.FileName, returnToDropZone: true);
     }
 
     private void MatchAdd_Click(object sender, RoutedEventArgs e)
@@ -562,28 +569,32 @@ public partial class MainWindow : Window
         ResetDropZone();
 
         FileDetailWindow win;
-        if (_matchIsExact || _currentSimilarFiles.Count == 0)
+        if (_currentSimilarFiles.Count > 0)
         {
-            // 100% exact match: single-file USE — source file detected against the one DB record
-            if (MatchList.SelectedItem is not MatchRow row) return;
-            win = new FileDetailWindow(_client, row.FileId, row.FileName, sourceFilePath: filePath, currentUserId: _currentUserId);
-        }
-        else
-        {
-            // Similar matches: aggregate all similar files into one USE dialog
+            // Aggregate patches from all similar files (≥78%), including exact matches
             win = new FileDetailWindow(_client, _currentSimilarFiles, sourceFilePath: filePath, currentUserId: _currentUserId);
         }
+        else if (MatchList.SelectedItem is MatchRow row)
+        {
+            // Fallback: no similar files found — use only the matched file
+            win = new FileDetailWindow(_client, row.FileId, row.FileName, sourceFilePath: filePath, currentUserId: _currentUserId);
+        }
+        else return;
 
         win.Owner = this;
-        win.Closed += (_, _) => Activate();
+        win.Closed += (_, _) => { Activate(); ShowPanel("DropZone"); };
         win.Show();
     }
 
-    private void OpenFileDetail(Guid fileId, string fileName)
+    private void OpenFileDetail(Guid fileId, string fileName, bool returnToDropZone = false)
     {
         var win = new FileDetailWindow(_client, fileId, fileName, currentUserId: _currentUserId);
         win.Owner = this;
-        win.Closed += (_, _) => Activate();
+        win.Closed += (_, _) =>
+        {
+            Activate();
+            if (returnToDropZone) ShowPanel("DropZone");
+        };
         win.Show();
     }
 
@@ -819,7 +830,7 @@ public partial class MainWindow : Window
                 var dlg = new SuccessDialog($"File uploaded successfully!\n{Path.GetFileName(UploadFilePath.Text)}") { Owner = this };
                 dlg.Show();
             }
-            OpenFileDetail(result.FileId, displayName);
+            OpenFileDetail(result.FileId, displayName, returnToDropZone: true);
         }
         catch (Exception ex)
         {
@@ -834,6 +845,12 @@ public partial class MainWindow : Window
     }
 
     // ── Lookups / autocomplete ────────────────────────────────────────────────
+
+    // Track handlers per ComboBox so AttachAutocomplete can remove stale ones before re-adding.
+    // Without this, every cascade reload stacks a new TextChanged handler on the same ComboBox,
+    // causing competing filters and making it impossible to type after the first selection.
+    private readonly Dictionary<ComboBox, TextChangedEventHandler>    _acTextHandlers = [];
+    private readonly Dictionary<ComboBox, SelectionChangedEventHandler> _acSelHandlers = [];
 
     private async void RefreshLookups_Click(object sender, RoutedEventArgs e)
     {
@@ -980,12 +997,16 @@ public partial class MainWindow : Window
 
     private void AttachAutocomplete(ComboBox cb, List<string> all)
     {
+        // Remove previously attached handlers so re-calling this (on cascade reload) doesn't stack them.
+        if (_acTextHandlers.TryGetValue(cb, out var oldText)) cb.RemoveHandler(TextBox.TextChangedEvent, oldText);
+        if (_acSelHandlers.TryGetValue(cb, out var oldSel))   cb.SelectionChanged -= oldSel;
+
         cb.ItemsSource = all;
         var view = (ListCollectionView)CollectionViewSource.GetDefaultView(cb.ItemsSource);
 
         var busy = false;
 
-        cb.AddHandler(TextBox.TextChangedEvent, new TextChangedEventHandler((_, _) =>
+        TextChangedEventHandler textHandler = (_, _) =>
         {
             if (busy) return;
             var text = cb.Text;
@@ -1004,9 +1025,9 @@ public partial class MainWindow : Window
                     busy = false;
                 }, DispatcherPriority.Input);
             }
-        }));
+        };
 
-        cb.SelectionChanged += (_, e) =>
+        SelectionChangedEventHandler selHandler = (_, e) =>
         {
             if (e.AddedItems.Count > 0)
             {
@@ -1015,6 +1036,12 @@ public partial class MainWindow : Window
                 Dispatcher.InvokeAsync(() => busy = false, DispatcherPriority.Background);
             }
         };
+
+        cb.AddHandler(TextBox.TextChangedEvent, textHandler);
+        cb.SelectionChanged += selHandler;
+
+        _acTextHandlers[cb] = textHandler;
+        _acSelHandlers[cb]  = selHandler;
     }
 
     // ── Bulk Import ───────────────────────────────────────────────────────────
