@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChiptuningAi.Client.Auth;
+using ChiptuningAi.Client.BugReports;
 using ChiptuningAi.Client.BulkImport;
 using ChiptuningAi.Client.Common;
 using ChiptuningAi.Client.Files;
@@ -76,6 +77,9 @@ public sealed class ChiptuningAiClient : IDisposable
     /// <summary>Bulk ECU file import (Business tier only).</summary>
     public BulkImportClient BulkImport { get; }
 
+    /// <summary>Submit bug reports from the WPF client.</summary>
+    public BugReportsClient BugReports { get; }
+
     // ── Constructor ───────────────────────────────────────────────────────────
 
     /// <summary>
@@ -95,6 +99,7 @@ public sealed class ChiptuningAiClient : IDisposable
         Patches    = new PatchesClient(this);
         Lookups    = new LookupsClient(this);
         BulkImport = new BulkImportClient(this);
+        BugReports = new BugReportsClient(this);
     }
 
     /// <summary>

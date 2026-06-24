@@ -151,6 +151,16 @@
                                 <TextBlock Text="View Logs" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button DockPanel.Dock="Bottom"
+                                Style="{StaticResource GhostButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                Margin="0,0,0,4" Click="ReportBug_Click" ToolTip="Report a bug or issue">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE730;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Width="20" VerticalAlignment="Center"/>
+                                <TextBlock Text="Report Bug" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <StackPanel>
                             <Button x:Name="NavDropZone"
                                     Style="{StaticResource GhostButton}"

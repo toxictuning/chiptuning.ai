@@ -1,0 +1,80 @@
+<Window x:Class="ChiptuningAi.Dashboard.BugReportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Report a Bug"
+        Width="480" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgDark}"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+
+    <Border Background="{DynamicResource BgPanel}"
+            BorderBrush="{DynamicResource Border}" BorderThickness="1">
+        <StackPanel Margin="28,22">
+
+            <!-- Header -->
+            <Grid Margin="0,0,0,16">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE730;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                               Foreground="{DynamicResource AccentButtonBg}"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="REPORT A BUG" FontSize="11" FontWeight="Bold"
+                               Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Title -->
+            <TextBlock Text="Title *" FontSize="11" Foreground="{DynamicResource TextSecondary}"
+                       Margin="0,0,0,4"/>
+            <TextBox x:Name="TitleBox"
+                     Background="{DynamicResource BgMid}"
+                     Foreground="{DynamicResource TextPrimary}"
+                     BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                     Padding="8,6" FontSize="13" Margin="0,0,0,12"
+                     MaxLength="200"/>
+
+            <!-- Description -->
+            <TextBlock Text="Description *" FontSize="11" Foreground="{DynamicResource TextSecondary}"
+                       Margin="0,0,0,4"/>
+            <TextBox x:Name="DescriptionBox"
+                     Background="{DynamicResource BgMid}"
+                     Foreground="{DynamicResource TextPrimary}"
+                     BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                     Padding="8,6" FontSize="13" Margin="0,0,0,12"
+                     Height="100" TextWrapping="Wrap" AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto" MaxLength="5000"/>
+
+            <!-- Steps -->
+            <TextBlock Text="Steps to Reproduce (optional)" FontSize="11"
+                       Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,4"/>
+            <TextBox x:Name="StepsBox"
+                     Background="{DynamicResource BgMid}"
+                     Foreground="{DynamicResource TextPrimary}"
+                     BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                     Padding="8,6" FontSize="13" Margin="0,0,0,16"
+                     Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto" MaxLength="2000"/>
+
+            <!-- Error -->
+            <TextBlock x:Name="ErrorText"
+                       Foreground="#EF4444" FontSize="12"
+                       TextWrapping="Wrap" Visibility="Collapsed"
+                       Margin="0,0,0,12"/>
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="CancelBtn" Content="CANCEL"
+                        Style="{StaticResource GhostButton}"
+                        Padding="18,8" Margin="0,0,8,0"
+                        Click="Cancel_Click"/>
+                <Button x:Name="SubmitBtn" Content="SUBMIT"
+                        Style="{StaticResource AccentButton}"
+                        Padding="18,8"
+                        Click="Submit_Click"/>
+            </StackPanel>
+
+        </StackPanel>
+    </Border>
+</Window>

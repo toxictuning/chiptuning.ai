@@ -760,6 +760,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ReportBug_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new BugReportDialog(_client) { Owner = this };
+        dlg.ShowDialog();
+    }
+
     // ── Upload ────────────────────────────────────────────────────────────────
 
     private void Browse_Click(object sender, RoutedEventArgs e)
