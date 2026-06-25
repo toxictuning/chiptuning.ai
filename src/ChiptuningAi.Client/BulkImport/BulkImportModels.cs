@@ -19,6 +19,9 @@ public sealed class ParsedFileDto
     public string? EngineCode   { get; init; }
     public int?    PowerOutput  { get; init; }
 
+    /// <summary>%File.ReadHardware% value — e.g. "Autotuner OBD", "bFlash".</summary>
+    public string? ReadHardware { get; init; }
+
     /// <summary>%More.Versionname% value — "Original", "OPF OFF", "Stage 1", etc.</summary>
     public string? VersionName { get; init; }
 
