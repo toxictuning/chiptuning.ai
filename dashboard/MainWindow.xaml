@@ -596,6 +596,36 @@
                                            TextWrapping="Wrap" Margin="0,0,0,16"
                                            Text="Select a folder or individual ECU files named using the standard convention. Filenames are parsed for metadata on the server, then uploaded one by one."/>
 
+                                <!-- WinOLS Format Helper -->
+                                <Border Background="{DynamicResource BgPanel}" Padding="20" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="WinOLS Export Format" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,4"/>
+                                        <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondary}"
+                                                   TextWrapping="Wrap" Margin="0,0,0,10"
+                                                   Text="In WinOLS go to Configuration → Paths → Automatically → Export → Default, then paste this format string:"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0"
+                                                     Text="%Vehicle.Type%_%ECU.Use%_%Vehicle.Producer%_%Vehicle.Series%-%Vehicle.Model%_%Vehicle.Modelyear%_%Vehicle.Build%_%Engine.OutputPS%_%ECU.Producer%_%ECU.Build%_%File.ReadHardware%_%More.Versionname%_%Engine.OutputKW%_%Engine.MaxTorque%_%Engine.Type%.bin"
+                                                     Style="{StaticResource DarkTextBox}"
+                                                     IsReadOnly="True"
+                                                     FontFamily="Consolas, Courier New"
+                                                     FontSize="11"
+                                                     Margin="0,0,8,0"
+                                                     VerticalContentAlignment="Center"/>
+                                            <Button Grid.Column="1" x:Name="BulkCopyFormatBtn"
+                                                    Content="Copy"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="BulkCopyFormat_Click"
+                                                    ToolTip="Copy the WinOLS format string to clipboard"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- Controls -->
                                 <Border Background="{DynamicResource BgPanel}" Padding="20" Margin="0,0,0,12">
                                     <StackPanel>

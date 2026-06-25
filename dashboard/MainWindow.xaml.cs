@@ -1052,6 +1052,19 @@ public partial class MainWindow : Window
 
     // ── Bulk Import ───────────────────────────────────────────────────────────
 
+    private const string WinOlsFormatString =
+        "%Vehicle.Type%_%ECU.Use%_%Vehicle.Producer%_%Vehicle.Series%-%Vehicle.Model%_%Vehicle.Modelyear%_%Vehicle.Build%_%Engine.OutputPS%_%ECU.Producer%_%ECU.Build%_%File.ReadHardware%_%More.Versionname%_%Engine.OutputKW%_%Engine.MaxTorque%_%Engine.Type%.bin";
+
+    private void BulkCopyFormat_Click(object sender, RoutedEventArgs e)
+    {
+        Clipboard.SetText(WinOlsFormatString);
+        BulkCopyFormatBtn.Content = "Copied!";
+        var timer = new System.Windows.Threading.DispatcherTimer
+            { Interval = TimeSpan.FromSeconds(2) };
+        timer.Tick += (_, _) => { BulkCopyFormatBtn.Content = "Copy"; timer.Stop(); };
+        timer.Start();
+    }
+
     private void BulkSelectFolder_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFolderDialog { Title = "Select folder containing ECU files" };
