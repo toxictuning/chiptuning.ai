@@ -58,7 +58,6 @@ public partial class MainWindow : Window
     private IReadOnlyList<SimilarFile> _currentSimilarFiles = [];
 
     // ── Bulk import state ─────────────────────────────────────────────────────
-    private bool _isBusiness;
     private readonly ObservableCollection<BulkRow> _bulkRows = [];
     private List<string> _pendingBulkPaths = [];
 
@@ -626,9 +625,8 @@ public partial class MainWindow : Window
                 ? $"{usedMb / 1024:N2} GB of {limitMb / 1024:N0} GB used  ({pct:N1}%)"
                 : $"{usedMb:N1} MB of {limitMb:N0} MB used  ({pct:N1}%)";
 
-            _isBusiness = p.Tier.Equals("Business", StringComparison.OrdinalIgnoreCase);
-            BulkLockOverlay.Visibility     = _isBusiness ? Visibility.Collapsed : Visibility.Visible;
-            BulkImportTierBadge.Visibility = _isBusiness ? Visibility.Collapsed : Visibility.Visible;
+            BulkLockOverlay.Visibility     = Visibility.Collapsed;
+            BulkImportTierBadge.Visibility = Visibility.Collapsed;
         }
         catch (Exception ex) { AppLogger.Error("LoadProfile failed", ex); }
     }
