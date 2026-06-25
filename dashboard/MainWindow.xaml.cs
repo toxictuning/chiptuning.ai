@@ -1055,7 +1055,15 @@ public partial class MainWindow : Window
 
     private void BulkCopyFormat_Click(object sender, RoutedEventArgs e)
     {
-        Clipboard.SetText(WinOlsFormatString);
+        for (int i = 0; i < 5; i++)
+        {
+            try
+            {
+                Clipboard.SetDataObject(WinOlsFormatString, true);
+                break;
+            }
+            catch (System.Runtime.InteropServices.COMException) { System.Threading.Thread.Sleep(50); }
+        }
         BulkCopyFormatBtn.Content = "Copied!";
         var timer = new System.Windows.Threading.DispatcherTimer
             { Interval = TimeSpan.FromSeconds(2) };
