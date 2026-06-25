@@ -610,7 +610,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBox Grid.Column="0"
-                                                     Text="%Vehicle.Type%_%ECU.Use%_%Vehicle.Producer%_%Vehicle.Series%-%Vehicle.Model%_%Vehicle.Modelyear%_%Vehicle.Build%_%Engine.OutputPS%_%ECU.Producer%_%ECU.Build%_%File.ReadHardware%_%More.Versionname%_%Engine.OutputKW%_%Engine.MaxTorque%_%Engine.Type%.bin"
+                                                     Text="%Vehicle.Type%_%ECU.Use%_%Vehicle.Producer%_%Vehicle.Series%-%Vehicle.Model%_%Vehicle.Modelyear%_%Vehicle.Build%_%Engine.OutputPS%_%ECU.Producer%_%ECU.Build%_%File.ReadHardware%_%More.Versionname%_%Engine.OutputKW%_%Engine.MaxTorque%_%Engine.Type%_%File.Filetitle%.bin"
                                                      Style="{StaticResource DarkTextBox}"
                                                      IsReadOnly="True"
                                                      FontFamily="Consolas, Courier New"
@@ -698,6 +698,7 @@
                                                   MaxHeight="300">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="Status"  Binding="{Binding ImportStatus}" Width="100" MinWidth="85"/>
+                                                <DataGridTextColumn Header="Version" Binding="{Binding Version}"      Width="120" MinWidth="80"/>
                                                 <DataGridTextColumn Header="File"    Binding="{Binding FileName}"     Width="2*"  MinWidth="140"/>
                                                 <DataGridTextColumn Header="Vehicle" Binding="{Binding Vehicle}"      Width="2*"  MinWidth="120"/>
                                                 <DataGridTextColumn Header="ECU"     Binding="{Binding Ecu}"          Width="*"   MinWidth="100"/>

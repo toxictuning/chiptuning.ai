@@ -19,6 +19,15 @@ public sealed class ParsedFileDto
     public string? EngineCode   { get; init; }
     public int?    PowerOutput  { get; init; }
 
+    /// <summary>%More.Versionname% value — "Original", "OPF OFF", "Stage 1", etc.</summary>
+    public string? VersionName { get; init; }
+
+    /// <summary>%File.Filetitle% rejoined — WinOLS project ID shared by all variants of the same file. Used as group key to link patches to their Original.</summary>
+    public string? GroupKey { get; init; }
+
+    /// <summary>True when VersionName is "Original" (case-insensitive).</summary>
+    public bool IsOriginal => string.Equals(VersionName, "Original", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>Validation errors, if any.</summary>
     public string[] Errors { get; init; } = [];
 }

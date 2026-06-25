@@ -21,12 +21,15 @@ internal sealed class BulkRow : INotifyPropertyChanged
 {
     private string _importStatus = string.Empty;
 
-    public required string       FileName     { get; init; }
-    public required string       Vehicle      { get; init; }
-    public required string       Ecu          { get; init; }
-    public          string?      Power        { get; init; }
-    public          string?      ErrorText    { get; init; }
-    public          string?      FilePath     { get; set;  }
+    public required string        FileName    { get; init; }
+    public required string        Vehicle     { get; init; }
+    public required string        Ecu         { get; init; }
+    public          string?       Power       { get; init; }
+    public          string?       Version     { get; init; }
+    public          string?       GroupKey    { get; init; }
+    public          bool          IsOriginal  { get; init; }
+    public          string?       ErrorText   { get; init; }
+    public          string?       FilePath    { get; set;  }
     public required ParsedFileDto Parsed      { get; init; }
 
     public string ImportStatus
@@ -1051,7 +1054,7 @@ public partial class MainWindow : Window
     // ── Bulk Import ───────────────────────────────────────────────────────────
 
     private const string WinOlsFormatString =
-        "%Vehicle.Type%_%ECU.Use%_%Vehicle.Producer%_%Vehicle.Series%-%Vehicle.Model%_%Vehicle.Modelyear%_%Vehicle.Build%_%Engine.OutputPS%_%ECU.Producer%_%ECU.Build%_%File.ReadHardware%_%More.Versionname%_%Engine.OutputKW%_%Engine.MaxTorque%_%Engine.Type%.bin";
+        "%Vehicle.Type%_%ECU.Use%_%Vehicle.Producer%_%Vehicle.Series%-%Vehicle.Model%_%Vehicle.Modelyear%_%Vehicle.Build%_%Engine.OutputPS%_%ECU.Producer%_%ECU.Build%_%File.ReadHardware%_%More.Versionname%_%Engine.OutputKW%_%Engine.MaxTorque%_%Engine.Type%_%File.Filetitle%.bin";
 
     private void BulkCopyFormat_Click(object sender, RoutedEventArgs e)
     {
@@ -1163,6 +1166,9 @@ public partial class MainWindow : Window
                     Vehicle      = vehicle,
                     Ecu          = ecu,
                     Power        = dto.PowerOutput.HasValue ? $"{dto.PowerOutput}" : null,
+                    Version      = dto.VersionName,
+                    GroupKey     = dto.GroupKey,
+                    IsOriginal   = dto.IsOriginal,
                     ErrorText    = dto.Errors.Length > 0 ? string.Join("; ", dto.Errors) : null,
                     ImportStatus = dto.Status == "Valid" ? "Valid" : "Invalid",
                     Parsed       = dto,
@@ -1199,8 +1205,8 @@ public partial class MainWindow : Window
         var validRows = _bulkRows.Where(r => r.ImportStatus == "Valid" && r.FilePath is not null).ToList();
         if (validRows.Count == 0) return;
 
-        BulkImportBtn.IsEnabled = false;
-        BulkParseBtn.IsEnabled  = false;
+        BulkImportBtn.IsEnabled        = false;
+        BulkParseBtn.IsEnabled         = false;
         BulkOverallProgress.Visibility = Visibility.Visible;
         BulkOverallProgress.Value      = 0;
 
@@ -1208,40 +1214,82 @@ public partial class MainWindow : Window
         var success = 0;
         var failed  = 0;
 
-        WriteBulkLog($"Starting import of {validRows.Count} file(s)…");
+        // Originals first, then patches — order matters for parent linking
+        var originals = validRows.Where(r => r.IsOriginal).ToList();
+        var patches   = validRows.Where(r => !r.IsOriginal).ToList();
 
-        foreach (var row in validRows)
+        // GroupKey → FileId — populated as originals are uploaded
+        var parentIds = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+
+        WriteBulkLog($"Starting import — {originals.Count} original(s), {patches.Count} patch(es)…");
+
+        // ── Phase 1: upload original files ────────────────────────────────────
+        foreach (var row in originals)
         {
             row.ImportStatus = "Uploading…";
-            WriteBulkLog($"→ {row.FileName}");
-
+            WriteBulkLog($"→ [Original] {row.FileName}");
             try
             {
                 var result = await _client.BulkImport.ImportFileAsync(row.FilePath!, row.Parsed);
-
-                if (result.Success)
+                if (result.Success && result.FileId.HasValue)
                 {
-                    row.ImportStatus = "✓ Done";
+                    row.ImportStatus = "✓ Original";
                     success++;
-                    AppLogger.Info($"Bulk import OK: {row.FileName} → FileId={result.FileId}");
+                    if (!string.IsNullOrEmpty(row.GroupKey))
+                        parentIds[row.GroupKey] = result.FileId.Value;
+                    AppLogger.Info($"Bulk original OK: {row.FileName} → FileId={result.FileId}");
                     WriteBulkLog($"  ✓ {row.FileName}");
                 }
                 else
                 {
                     row.ImportStatus = "✗ Failed";
                     failed++;
-                    var rejCode = AppLogger.Error($"Bulk import rejected: {row.FileName} — {result.Error}");
-                    WriteBulkLog($"  ✗ {row.FileName} ({rejCode})");
+                    WriteBulkLog($"  ✗ {row.FileName} — {result.Error}");
                 }
             }
             catch (Exception ex)
             {
                 row.ImportStatus = "✗ Failed";
                 failed++;
-                var exCode = AppLogger.Error($"Bulk import exception: {row.FileName}", ex);
-                WriteBulkLog($"  ✗ {row.FileName} ({exCode})");
+                WriteBulkLog($"  ✗ {row.FileName} ({AppLogger.Error("Bulk original exception", ex)})");
+            }
+            done++;
+            BulkOverallProgress.Value = (double)done / validRows.Count * 100;
+        }
+
+        // ── Phase 2: upload patches linked to their original ─────────────────
+        foreach (var row in patches)
+        {
+            if (string.IsNullOrEmpty(row.GroupKey) || !parentIds.TryGetValue(row.GroupKey, out var parentId))
+            {
+                row.ImportStatus = "✗ No Original";
+                failed++;
+                WriteBulkLog($"  ✗ {row.FileName} — no matching Original in batch (same project title required)");
+                done++;
+                BulkOverallProgress.Value = (double)done / validRows.Count * 100;
+                continue;
             }
 
+            row.ImportStatus = "Uploading…";
+            WriteBulkLog($"→ [Patch] {row.FileName}");
+            try
+            {
+                var result = await _client.Patches.UploadAsync(
+                    row.FilePath!,
+                    parentId,
+                    description: row.Version,
+                    version:     null);
+                row.ImportStatus = "✓ Patch";
+                success++;
+                AppLogger.Info($"Bulk patch OK: {row.FileName} → PatchId={result.PatchId}");
+                WriteBulkLog($"  ✓ {row.FileName} → patch on {parentId}");
+            }
+            catch (Exception ex)
+            {
+                row.ImportStatus = "✗ Failed";
+                failed++;
+                WriteBulkLog($"  ✗ {row.FileName} ({AppLogger.Error("Bulk patch exception", ex)})");
+            }
             done++;
             BulkOverallProgress.Value = (double)done / validRows.Count * 100;
         }
