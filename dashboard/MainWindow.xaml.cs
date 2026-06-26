@@ -1008,7 +1008,7 @@ public partial class MainWindow : Window
         if (_acTextHandlers.TryGetValue(cb, out var oldText)) cb.RemoveHandler(TextBox.TextChangedEvent, oldText);
         if (_acSelHandlers.TryGetValue(cb, out var oldSel))   cb.SelectionChanged -= oldSel;
 
-        cb.ItemsSource = all;
+        cb.ItemsSource = all.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var view = (ListCollectionView)CollectionViewSource.GetDefaultView(cb.ItemsSource);
 
         var busy = false;
