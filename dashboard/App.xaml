@@ -224,8 +224,9 @@
                 <Setter Property="BorderThickness"   Value="0"/>
                 <Setter Property="Padding"           Value="10,8"/>
                 <Setter Property="Height"            Value="36"/>
-                <Setter Property="IsEditable"        Value="True"/>
-                <Setter Property="StaysOpenOnEdit"   Value="True"/>
+                <Setter Property="IsEditable"          Value="True"/>
+                <Setter Property="IsTextSearchEnabled" Value="False"/>
+                <Setter Property="StaysOpenOnEdit"     Value="True"/>
                 <Setter Property="MaxDropDownHeight" Value="200"/>
                 <Setter Property="Template">
                     <Setter.Value>
