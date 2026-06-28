@@ -81,6 +81,24 @@ public partial class MainWindow : Window
         t.Start();
     }
 
+    // ── Update check ─────────────────────────────────────────────────────────
+
+    private async Task CheckForUpdateAsync()
+    {
+        var latest = await UpdateChecker.GetLatestVersionAsync();
+        if (!UpdateChecker.IsNewer(latest)) return;
+        Dispatcher.Invoke(() =>
+        {
+            UpdateBtn.ToolTip    = $"Version {latest} is available — click to download";
+            UpdateBtn.Visibility = Visibility.Visible;
+        });
+    }
+
+    private void UpdateBtn_Click(object sender, RoutedEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(UpdateChecker.ReleasesUrl) { UseShellExecute = true });
+    }
+
     // ── Token refresh timer ───────────────────────────────────────────────────
 
     private DispatcherTimer? _refreshTimer;
@@ -149,6 +167,7 @@ public partial class MainWindow : Window
             InitLangPicker();
             await LoadProfileAsync();
             _ = LoadLookupsAsync();
+            _ = CheckForUpdateAsync();
             StartRefreshTimer();
         };
 

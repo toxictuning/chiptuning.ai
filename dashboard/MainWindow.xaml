@@ -39,6 +39,14 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                 VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Button x:Name="UpdateBtn" Visibility="Collapsed"
+                                Content="⬆ Update available"
+                                Foreground="#22C55E"
+                                Background="Transparent" BorderThickness="0"
+                                FontSize="11" FontWeight="SemiBold"
+                                Cursor="Hand" Margin="0,0,12,0"
+                                VerticalAlignment="Center"
+                                Click="UpdateBtn_Click"/>
                         <TextBlock x:Name="ProfileLabel" FontSize="12"
                                    Foreground="{DynamicResource TextSecondary}"
                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
